@@ -1,11 +1,9 @@
 from django.db import models
 from django.db.models.functions import Coalesce
+from django.contrib.auth.models import AbstractUser
 
-class Usuario(models.Model):
-    id_usuario = models.AutoField(primary_key=True)
-    nome_usuario = models.CharField(max_length=255)
+class Usuario(AbstractUser):
     cpf_usuario = models.CharField(max_length=14, unique=True, null=True, blank=True)
-    email_usuario = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -13,7 +11,7 @@ class Usuario(models.Model):
         db_table = 'usuario'
 
     def __str__(self):
-        return self.nome_usuario
+        return self.username
 
 class Docente(models.Model):
     class Titulacao(models.TextChoices):
@@ -28,15 +26,16 @@ class Docente(models.Model):
         ASSISTENTE = 'Professor Assistente', 'Professor Assistente'
         TITULAR = 'Professor Titular', 'Professor Titular'
         SUBSTITUTO = 'Professor Substituto', 'Professor Substituto'
+        MAGISTERIO_SUPERIOR = 'Professor do Magistério Superior', 'Professor do Magistério Superior'
 
     id_docente = models.AutoField(primary_key=True)
     nome_docente = models.CharField(max_length=255)
     titulacao_docente = models.CharField(max_length=50, choices=Titulacao.choices, null=True, blank=True)
-    centro_lotacao = models.CharField(max_length=45, null=True, blank=True) 
+    centro_lotacao = models.CharField(max_length=255, null=True, blank=True) 
     unidade_vinculo = models.ForeignKey('Unidade', on_delete=models.SET_NULL, null=True, blank=True, related_name='docentes_vinculados')
     cursos_vinculados = models.ManyToManyField('Curso', related_name='corpo_docente', blank=True)
-    cargo_docente = models.CharField(max_length=50, choices=Cargo.choices, null=True, blank=True)
-    jornada_docente = models.IntegerField(null=True, blank=True)
+    cargo_docente = models.CharField(max_length=100, choices=Cargo.choices, null=True, blank=True)
+    jornada_docente = models.CharField(max_length=50, null=True, blank=True)
     tempo_casa_docente = models.IntegerField(null=True, blank=True)
     email_docente = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)

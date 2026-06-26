@@ -3,7 +3,9 @@ from django.apps import AppConfig
 from django.db.models.signals import post_migrate
 
 def create_default_admin(sender, **kwargs):
-    from django.contrib.auth.models import User
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    
     if not User.objects.filter(username='admin').exists():
         User.objects.create_superuser('admin', 'admin@admin.com', 'admin123')
         sys.stdout.write("\n==================================================\n")

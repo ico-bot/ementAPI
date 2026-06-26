@@ -38,7 +38,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'extracao_dados',
-    'base_ementario'
+    'base_ementario',
+
+
+    'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -117,3 +121,17 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+
+AUTH_USER_MODEL = 'base_ementario.Usuario'
+
+
+# Configurações Globais do Django REST Framework
+REST_FRAMEWORK = {
+    # Ativa a paginação globalmente (RF11)
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20, # Retorna 20 cursos/disciplinas por página
+    
+    # Ativa o sistema de filtros avançados globalmente (RF10)
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+}

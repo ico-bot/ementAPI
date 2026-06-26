@@ -2,7 +2,7 @@ from django.shortcuts import render
 from rest_framework import viewsets, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from rest_framework.permissions import BasePermission, SAFE_METHODS
+from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAdminUser
 from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import (
@@ -91,11 +91,11 @@ def dashboard_overview(_request):
     )
 
 class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all().order_by('id_usuario')
+    queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
-    permission_classes = [IsAdminOrReadOnly]
+    permission_classes = [IsAdminUser]
     filterset_fields = ['cpf_usuario', 'email_usuario']
-    search_fields = ['nome_usuario']
+    search_fields = ['username', 'first_name']
 
 class DocenteViewSet(viewsets.ModelViewSet):
     queryset = Docente.objects.all().order_by('id_docente')
