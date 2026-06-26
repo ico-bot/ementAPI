@@ -13,6 +13,7 @@
     3. Um **Grau de Urgência** (Baixo, Médio, Alto ou Crítico).
 
 ## 3. Padrões de Código Front-End
+* **Simetria com o Back-End (Inspeção de Models):** Antes de criar ou alterar qualquer interface de entidade em `types.ts` (ex: `Curso`, `Disciplina`, `Docente`), você DEVE obrigatoriamente ler o arquivo `base_ementario/models.py` (ou equivalente do Django) para garantir compatibilidade exata dos nomes de propriedades opcionais e dos valores literais de `TextChoices` (ex: mapear `Em atividade` em vez de `Ativo`).
 * **TypeScript Estrito:** Utilize TypeScript estrito em todos os arquivos (`.tsx` e `.ts`). É expressamente **proibido o uso de `any`**. Se o tipo exato não for conhecido, utilize `unknown` ou crie uma `interface` baseada na suposição estrutural dos dados do backend. Todo componente React deve ter suas `Props` explicitamente tipadas.
 * **Estilização:** Utilize **exclusivamente Tailwind CSS** para toda a estilização dos componentes via classes utilitárias (`className`). Não crie arquivos CSS isolados, a menos que seja para configurações globais estritas.
 * **Integração e Mocks:** Centralize as chamadas de API em serviços isolados (ex: `src/modules/cursos/services`). Como a API real não está pronta, gere arquivos de Mock locais (objetos JSON tipados) para simular o retorno do backend durante o desenvolvimento das telas.
@@ -23,6 +24,7 @@
 * **Justificativa de Desvios:** Se no decorrer do desenvolvimento for necessário mudar algo em relação ao plano original, especifique o motivo da mudança no final da sua resposta.
 * **Versionamento:** Sempre que sugerir comandos de Git, utilize o padrão *Conventional Commits* (ex: `feat:`, `fix:`).
 * **Transparência no Terminal:** ANTES de solicitar permissão para executar qualquer comando no meu terminal (shell), você DEVE explicar brevemente, em português, o que aquele comando faz e por que ele é necessário para a tarefa atual.
+* **Comandos que não precisam de aprovação:** npm run build.
 
 ## 5. Encerramento de Task
 Sempre que uma tarefa for concluída, você DEVE finalizar sua resposta seguindo este checklist exato:

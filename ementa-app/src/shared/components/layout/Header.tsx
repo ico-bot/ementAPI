@@ -1,18 +1,13 @@
 /**
  * @file Header.tsx
- * @description Cabeçalho principal da aplicação contendo título do ambiente e chamadas de ação.
+ * @description Cabeçalho principal da aplicação contendo título do ambiente acadêmico.
  */
 
 import React from 'react';
-import { Button } from '../ui/Button';
 
-export interface HeaderProps {
-  onNewCursoClick?: () => void;
-}
-
-export const Header: React.FC<HeaderProps> = ({ onNewCursoClick }) => {
+export const Header: React.FC = () => {
   return (
-    <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2xl">
+    <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-6 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xl shadow-2x1">
       <div>
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 text-xs font-semibold uppercase tracking-wider mb-2">
           <span className="w-2 h-2 rounded-full bg-purple-400 animate-pulse" />
@@ -25,11 +20,6 @@ export const Header: React.FC<HeaderProps> = ({ onNewCursoClick }) => {
           Plataforma centralizada para administração de matrizes curriculares e disciplinas.
         </p>
       </div>
-      {onNewCursoClick && (
-        <Button variant="primary" onClick={onNewCursoClick}>
-          + Novo Curso
-        </Button>
-      )}
     </header>
   );
 };

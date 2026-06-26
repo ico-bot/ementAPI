@@ -1,3 +1,6 @@
-# Telas de Disciplinas (`src/modules/disciplinas/pages`)
+# Páginas do Módulo de Disciplinas (`src/modules/disciplinas/pages`)
 
-Telas de listagem, vinculação e edição de Disciplinas associadas às matrizes curriculares.
+Esta pasta contém as telas principais de visualização do ementário acadêmico.
+
+## Páginas
+* **`DisciplinasPage.tsx`**: Página principal que coordena a busca da matriz curricular do curso selecionado, exibe barra de filtros por termo/período/tipo e gerencia o modal de visualização de detalhes da ementa institucional.

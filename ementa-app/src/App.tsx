@@ -1,141 +1,82 @@
 /**
  * @file App.tsx
- * @description Componente raiz da aplicação coordenando layout principal e navegação entre módulos.
+ * @description Componente raiz da aplicação coordenando layout principal e navegação dinâmica entre Cursos e Disciplinas.
  */
 
 import { useState } from 'react';
 import { CursosListPage } from './modules/cursos/pages/CursosListPage';
-import { createCurso } from './modules/cursos/services/cursosService';
-import type { CursoInput } from './modules/cursos/services/types';
+import { DisciplinasGlobalPage } from './modules/disciplinas/pages/DisciplinasGlobalPage';
+import { DisciplinasPage } from './modules/disciplinas/pages/DisciplinasPage';
 import { MainLayout } from './shared/components/layout/MainLayout';
-import { Button } from './shared/components/ui/Button';
-import { Modal } from './shared/components/ui/Modal';
+
+type ActiveView = 'cursos' | 'disciplinasCurso' | 'disciplinasGlobal';
 
 function App() {
-  const [isNewCursoModalOpen, setIsNewCursoModalOpen] = useState<boolean>(false);
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [refreshKey, setRefreshKey] = useState<number>(0);
+  const [activeView, setActiveView] = useState<ActiveView>('cursos');
+  const [selectedCursoId, setSelectedCursoId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<CursoInput>({
-    nome: '',
-    codigo: '',
-    cargaHoraria: 3200,
-    descricao: '',
-  });
-
-  const handleOpenModal = () => setIsNewCursoModalOpen(true);
-  const handleCloseModal = () => setIsNewCursoModalOpen(false);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === 'cargaHoraria' ? Number(value) : value,
-    }));
+  const handleSelectCurso = (cursoId: string) => {
+    setSelectedCursoId(cursoId);
+    setActiveView('disciplinasCurso');
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-    try {
-      await createCurso(formData);
-      setRefreshKey((prev) => prev + 1);
-      handleCloseModal();
-      setFormData({ nome: '', codigo: '', cargaHoraria: 3200, descricao: '' });
-    } catch (error) {
-      console.error('Erro ao criar curso:', error);
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleBackToCursos = () => {
+    setSelectedCursoId(null);
+    setActiveView('cursos');
   };
 
   return (
-    <MainLayout onNewCursoClick={handleOpenModal}>
-      <CursosListPage key={refreshKey} onSelectCurso={(id) => alert(`Exibindo disciplinas do curso ID: ${id}`)} />
+    <MainLayout>
+      {/* Barra de Navegação Superior por Abas */}
+      <nav className="flex items-center gap-2 pb-6 border-b border-slate-800/80">
+        <button
+          type="button"
+          onClick={() => setActiveView('cursos')}
+          className={`px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer ${
+            activeView === 'cursos' || activeView === 'disciplinasCurso'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30 border border-purple-400/30 font-bold'
+              : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          🎓 Catálogo de Cursos
+        </button>
 
-      <Modal isOpen={isNewCursoModalOpen} onClose={handleCloseModal} title="Cadastrar Novo Curso">
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label htmlFor="nome" className="block text-xs font-medium text-slate-300 uppercase tracking-wider">
-              Nome do Curso
-            </label>
-            <input
-              id="nome"
-              name="nome"
-              type="text"
-              required
-              placeholder="ex: Engenharia de Software"
-              value={formData.nome}
-              onChange={handleInputChange}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 text-sm"
-            />
-          </div>
+        <button
+          type="button"
+          onClick={() => {
+            setSelectedCursoId(null);
+            setActiveView('disciplinasGlobal');
+          }}
+          className={`px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer ${
+            activeView === 'disciplinasGlobal'
+              ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30 border border-purple-400/30 font-bold'
+              : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+          }`}
+        >
+          📚 Todas as Disciplinas (Geral)
+        </button>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1">
-              <label htmlFor="codigo" className="block text-xs font-medium text-slate-300 uppercase tracking-wider">
-                Código
-              </label>
-              <input
-                id="codigo"
-                name="codigo"
-                type="text"
-                required
-                placeholder="ex: ESOFT001"
-                value={formData.codigo}
-                onChange={handleInputChange}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 text-sm font-mono"
-              />
-            </div>
+        {activeView === 'disciplinasCurso' && (
+          <span className="text-xs text-purple-300 ml-auto hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-purple-950/60 border border-purple-800/50 animate-fade-in font-mono">
+            Matriz Específica Selecionada
+          </span>
+        )}
+      </nav>
 
-            <div className="space-y-1">
-              <label
-                htmlFor="cargaHoraria"
-                className="block text-xs font-medium text-slate-300 uppercase tracking-wider"
-              >
-                Carga Horária (h)
-              </label>
-              <input
-                id="cargaHoraria"
-                name="cargaHoraria"
-                type="number"
-                required
-                min={100}
-                max={10000}
-                value={formData.cargaHoraria}
-                onChange={handleInputChange}
-                className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 text-sm font-mono"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-1">
-            <label htmlFor="descricao" className="block text-xs font-medium text-slate-300 uppercase tracking-wider">
-              Descrição
-            </label>
-            <textarea
-              id="descricao"
-              name="descricao"
-              rows={3}
-              placeholder="Resumo dos objetivos do curso..."
-              value={formData.descricao}
-              onChange={handleInputChange}
-              className="w-full px-3.5 py-2.5 rounded-xl bg-slate-950/80 border border-white/10 text-white placeholder-slate-500 focus:outline-none focus:border-purple-500 text-sm resize-none"
-            />
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-4 border-t border-white/10">
-            <Button variant="secondary" onClick={handleCloseModal}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary" isLoading={isSubmitting}>
-              Salvar Curso
-            </Button>
-          </div>
-        </form>
-      </Modal>
+      {/* Renderização de Telas */}
+      <div className="pt-6">
+        {activeView === 'cursos' && <CursosListPage onSelectCurso={handleSelectCurso} />}
+        {activeView === 'disciplinasCurso' && (
+          <DisciplinasPage
+            cursoId={selectedCursoId || '1'}
+            onBackClick={handleBackToCursos}
+          />
+        )}
+        {activeView === 'disciplinasGlobal' && <DisciplinasGlobalPage />}
+      </div>
     </MainLayout>
   );
 }
 
 export default App;
+
