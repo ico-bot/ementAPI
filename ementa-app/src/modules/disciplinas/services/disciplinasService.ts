@@ -21,6 +21,7 @@ const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // Cópia em memória mutável para simular CRUD no Front-End
 let globalCatalogState: DisciplinaGlobalItem[] = [...disciplinasGlobalMock];
+let courseDisciplinasState: Record<string, Disciplina[]> = { ...DISCIPLINAS_MOCK };
 
 /**
  * Busca a matriz curricular (currículo vigente) de um curso pelo seu ID.
@@ -39,7 +40,7 @@ export async function fetchDisciplinasByCursoId(
   filtros?: FiltrosDisciplina
 ): Promise<Disciplina[]> {
   await delay(350);
-  let disciplinas = DISCIPLINAS_MOCK[cursoId] || [];
+  let disciplinas = courseDisciplinasState[cursoId] || [];
 
   if (!filtros) {
     return disciplinas;
@@ -134,4 +135,46 @@ export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem):
   globalCatalogState = globalCatalogState.map((item) => (item.id === updatedItem.id ? updatedItem : item));
   return updatedItem;
 }
+
+/**
+ * Cadastra uma nova disciplina na matriz curricular do curso específico.
+ */
+export async function createDisciplina(
+  cursoId: string,
+  newDisc: Omit<Disciplina, 'id'>
+): Promise<Disciplina> {
+  await delay(300);
+  const id = `disc-${Date.now()}`;
+  const created: Disciplina = {
+    ...newDisc,
+    id,
+  };
+
+  if (!courseDisciplinasState[cursoId]) {
+    courseDisciplinasState[cursoId] = [];
+  }
+  courseDisciplinasState[cursoId].push(created);
+
+  // Também adicionamos ao catálogo global de disciplinas para manter a consistência nas buscas globais
+  const createdGlobal: DisciplinaGlobalItem = {
+    id,
+    codigo: created.codigo,
+    nome: created.nome,
+    area: 'Ciências Exactas e Tecnológicas',
+    nivel: 'Graduação',
+    turno: 'Integral',
+    status: 'Em atividade',
+    cargaHoraria: created.cargaHoraria || 60,
+    creditos: created.creditos,
+    notaMinimaAprovacao: created.notaMinimaAprovacao,
+    unidade: created.unidade || 'CCET',
+    ementa: created.ementa,
+    bibliografiaBasica: created.bibliografiaBasica,
+    preRequisitos: created.preRequisitos,
+  };
+  globalCatalogState.push(createdGlobal);
+
+  return created;
+}
+
 

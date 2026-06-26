@@ -249,6 +249,19 @@ export const DisciplinaDetailModal = <
             </div>
           )}
 
+          {/* Pré-requisitos */}
+          {disciplina.preRequisitos && (
+            <div className="space-y-2 pt-6">
+              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                Pré-requisitos
+              </h4>
+              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200">
+                {disciplina.preRequisitos}
+              </div>
+            </div>
+          )}
+
           {/* Bibliografia Básica */}
           {disciplina.bibliografiaBasica && (
             <div className="space-y-2 pt-6">

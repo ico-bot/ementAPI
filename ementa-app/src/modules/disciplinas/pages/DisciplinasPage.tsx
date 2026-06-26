@@ -7,10 +7,12 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CurriculoHeader } from '../components/matriz-curricular/CurriculoHeader';
 import { DisciplinaDetailModal } from '../components/modals/DisciplinaDetailModal';
+import { NewDisciplinaModal } from '../components/modals/NewDisciplinaModal';
 import { MatrizCurricularGrid } from '../components/matriz-curricular/MatrizCurricularGrid';
 import {
   fetchCurriculoByCursoId,
   fetchDisciplinasByCursoId,
+  createDisciplina,
 } from '../services/disciplinasService';
 import type { Curriculo, Disciplina, TipoDisciplina } from '../services/types';
 
@@ -42,6 +44,9 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
   // Modal detail state
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+
+  // Modal de criação
+  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
   // Filter state variables (English names as per Rule 3)
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -81,6 +86,15 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
     setIsModalOpen(true);
   };
 
+  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>): Promise<void> => {
+    try {
+      await createDisciplina(cursoId, newDisc);
+      await loadData(); // Recarrega a grade
+    } catch (error) {
+      console.error('Erro ao cadastrar nova disciplina:', error);
+    }
+  };
+
   const handleResetFilters = () => {
     setSearchTerm('');
     setSelectedPeriod('Todos');
@@ -96,7 +110,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
           curriculo={curriculo}
           totalDisciplinas={disciplinas.length}
           onBackClick={handleBackClick}
-          onNewDisciplinaClick={() => alert('A funcionalidade de cadastro de nova disciplina será implementada em breve!')}
+          onNewDisciplinaClick={() => setIsNewModalOpen(true)}
         />
       ) : (
         <div className="p-8 rounded-3xl bg-amber-500/10 border border-amber-500/20 text-amber-200 flex items-center justify-between">
@@ -198,6 +212,13 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
         disciplina={selectedDisciplina}
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+      />
+
+      {/* Modal de Cadastro */}
+      <NewDisciplinaModal
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
+        onSave={handleSaveNewDisciplina}
       />
     </section>
   );

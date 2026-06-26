@@ -33,6 +33,7 @@ export interface Disciplina {
   programa?: string;
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
+  preRequisitos?: string;
 }
 
 export interface DisciplinaGlobalItem {
@@ -54,6 +55,7 @@ export interface DisciplinaGlobalItem {
   avaliacao?: string;
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
+  preRequisitos?: string;
 }
 
 export interface Curriculo {

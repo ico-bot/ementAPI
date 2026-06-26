@@ -6,11 +6,17 @@
 import React, { useEffect, useState } from 'react';
 import { DeleteConfirmationModal } from '../components/modals/DeleteConfirmationModal';
 import { DisciplinaDetailModal } from '../components/modals/DisciplinaDetailModal';
+import { NewDisciplinaModal } from '../components/modals/NewDisciplinaModal';
 import { DisciplinasTable } from '../components/list/DisciplinasTable';
 import { EditDisciplinaModal } from '../components/modals/EditDisciplinaModal';
 import { Pagination } from '../../../shared/components/ui/Pagination';
-import { deleteDisciplinaGlobal, fetchDisciplinasGlobal, updateDisciplinaGlobal } from '../services/disciplinasService';
-import type { DisciplinaGlobalItem, NivelDisciplina, StatusDisciplina } from '../services/types';
+import {
+  deleteDisciplinaGlobal,
+  fetchDisciplinasGlobal,
+  updateDisciplinaGlobal,
+  createDisciplina,
+} from '../services/disciplinasService';
+import type { DisciplinaGlobalItem, NivelDisciplina, StatusDisciplina, Disciplina } from '../services/types';
 
 export const DisciplinasGlobalPage: React.FC = () => {
   const [disciplinas, setDisciplinas] = useState<DisciplinaGlobalItem[]>([]);
@@ -32,6 +38,9 @@ export const DisciplinasGlobalPage: React.FC = () => {
   const [detailsModalDisciplina, setDetailsModalDisciplina] = useState<DisciplinaGlobalItem | null>(null);
   const [editModalDisciplina, setEditModalDisciplina] = useState<DisciplinaGlobalItem | null>(null);
   const [deleteModalDisciplina, setDeleteModalDisciplina] = useState<DisciplinaGlobalItem | null>(null);
+
+  // Cadastro modal state
+  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
   const loadCatalog = async (pageToLoad = currentPage, limit = itemsPerPage): Promise<void> => {
     setIsLoading(true);
@@ -83,6 +92,15 @@ export const DisciplinasGlobalPage: React.FC = () => {
     }
   };
 
+  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>): Promise<void> => {
+    try {
+      await createDisciplina('1', newDisc); // Associa ao curso 1 por padrão no mock
+      await loadCatalog(1, itemsPerPage); // Recarrega o catálogo indo para a página 1
+    } catch (error) {
+      console.error('Erro ao criar disciplina no catálogo global:', error);
+    }
+  };
+
   const handleConfirmDelete = async (itemToDelete: DisciplinaGlobalItem): Promise<void> => {
     await deleteDisciplinaGlobal(itemToDelete.id);
     // Se a última disciplina da página for excluída e houver mais páginas, volta uma página
@@ -119,7 +137,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
         <div className="flex items-center gap-3">
           <button
             type="button"
-            onClick={() => console.log('Abrir modal de criação de nova disciplina')}
+            onClick={() => setIsNewModalOpen(true)}
             className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-medium text-xs sm:text-sm tracking-wide shadow-lg shadow-purple-600/20 border border-purple-500/30 transition-all duration-200 cursor-pointer"
           >
             <span className="text-base leading-none">+</span>
@@ -253,6 +271,12 @@ export const DisciplinasGlobalPage: React.FC = () => {
         isOpen={Boolean(deleteModalDisciplina)}
         onClose={() => setDeleteModalDisciplina(null)}
         onConfirm={handleConfirmDelete}
+      />
+
+      <NewDisciplinaModal
+        isOpen={isNewModalOpen}
+        onClose={() => setIsNewModalOpen(false)}
+        onSave={handleSaveNewDisciplina}
       />
     </section>
   );

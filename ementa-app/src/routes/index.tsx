@@ -8,6 +8,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CursosListPage } from '../modules/cursos/pages/CursosListPage';
 import { DisciplinasGlobalPage } from '../modules/disciplinas/pages/DisciplinasGlobalPage';
 import { DisciplinasPage } from '../modules/disciplinas/pages/DisciplinasPage';
+import { LoginPage } from '../modules/login/pages/LoginPage';
 
 /**
  * @component AppRoutes
@@ -16,8 +17,11 @@ import { DisciplinasPage } from '../modules/disciplinas/pages/DisciplinasPage';
 export const AppRoutes: React.FC = () => {
   return (
     <Routes>
-      {/* Redirecionamento da raiz para o catálogo de cursos */}
-      <Route path="/" element={<Navigate to="/cursos" replace />} />
+      {/* Redirecionamento da raiz para a tela de login */}
+      <Route path="/" element={<Navigate to="/login" replace />} />
+
+      {/* Rota de login do sistema */}
+      <Route path="/login" element={<LoginPage />} />
 
       {/* Rota principal de listagem do catálogo de cursos */}
       <Route path="/cursos" element={<CursosListPage />} />
