@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import { CurriculoHeader } from '../components/matriz-curricular/CurriculoHeader';
 import { DisciplinaDetailModal } from '../components/modals/DisciplinaDetailModal';
 import { MatrizCurricularGrid } from '../components/matriz-curricular/MatrizCurricularGrid';
@@ -14,11 +15,26 @@ import {
 import type { Curriculo, Disciplina, TipoDisciplina } from '../services/types';
 
 export interface DisciplinasPageProps {
-  cursoId: string;
-  onBackClick: () => void;
+  cursoId?: string;
+  onBackClick?: () => void;
 }
 
-export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({ cursoId, onBackClick }) => {
+export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
+  cursoId: propCursoId,
+  onBackClick: propOnBackClick,
+}) => {
+  const params = useParams<{ cursoId: string }>();
+  const navigate = useNavigate();
+
+  const cursoId = propCursoId || params.cursoId || '1';
+  const handleBackClick = () => {
+    if (propOnBackClick) {
+      propOnBackClick();
+    } else {
+      navigate('/cursos');
+    }
+  };
+
   const [curriculo, setCurriculo] = useState<Curriculo | null>(null);
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -79,7 +95,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({ cursoId, onBac
         <CurriculoHeader
           curriculo={curriculo}
           totalDisciplinas={disciplinas.length}
-          onBackClick={onBackClick}
+          onBackClick={handleBackClick}
           onNewDisciplinaClick={() => alert('A funcionalidade de cadastro de nova disciplina será implementada em breve!')}
         />
       ) : (
@@ -92,7 +108,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({ cursoId, onBac
           </div>
           <button
             type="button"
-            onClick={onBackClick}
+            onClick={handleBackClick}
             className="px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-semibold cursor-pointer transition-all"
           >
             ← Voltar

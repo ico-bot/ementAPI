@@ -116,11 +116,8 @@ export const DisciplinasTable: React.FC<DisciplinasTableProps> = ({
                 </div>
                 <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 font-mono">
                   <span>{disc.cargaHoraria}h</span>
-                  <span className="text-slate-600">•</span>
-                  <span>{disc.creditos} Créditos</span>
                   {disc.unidade && (
                     <>
-                      <span className="text-slate-600 hidden sm:inline">•</span>
                       <span className="text-slate-500 truncate max-w-[200px] hidden sm:inline" title={disc.unidade}>
                         {disc.unidade}
                       </span>

@@ -116,10 +116,20 @@ export const DisciplinasGlobalPage: React.FC = () => {
             Repositório centralizado de todos os componentes curriculares ofertados na instituição
           </p>
         </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => console.log('Abrir modal de criação de nova disciplina')}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-500 active:scale-95 text-white font-medium text-xs sm:text-sm tracking-wide shadow-lg shadow-purple-600/20 border border-purple-500/30 transition-all duration-200 cursor-pointer"
+          >
+            <span className="text-base leading-none">+</span>
+            Nova Disciplina
+          </button>
+        </div>
       </div>
 
       {/* Barra de Pesquisa e Filtros */}
-      <div className="p-5 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-4 shadow-lg">
+      <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-4 shadow-lg">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
             <label htmlFor="searchGlobalInput" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">

@@ -4,6 +4,7 @@
  */
 
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { CursoCard } from '../components/list/CursoCard';
 import { CursosFilterBar } from '../components/filters/CursosFilterBar';
 import { NewCursoModal } from '../components/modals/NewCursoModal';
@@ -15,6 +16,7 @@ export interface CursosListPageProps {
 }
 
 export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso }) => {
+  const navigate = useNavigate();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
@@ -123,7 +125,11 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {cursos.map((curso) => (
-            <CursoCard key={curso.id} curso={curso} onViewEmentasClick={onSelectCurso} />
+            <CursoCard
+              key={curso.id}
+              curso={curso}
+              onViewEmentasClick={(id) => (onSelectCurso ? onSelectCurso(id) : navigate(`/cursos/${id}/disciplinas`))}
+            />
           ))}
         </div>
       )}
