@@ -3,7 +3,7 @@ import re
 from bs4 import BeautifulSoup
 
 class DocenteExtrator:
-    def __init__(self, nav):
+    def __init__(self, nav=None):
         self.nav = nav
 
 

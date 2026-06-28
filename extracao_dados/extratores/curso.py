@@ -4,7 +4,7 @@ import re
 #Extrair informações relacionadas a cursos
 class CursoExtrator:
 
-    def __init__(self, nav):
+    def __init__(self, nav=None):
         self.nav = nav
 
     # 4. Extrair ID do Link
