@@ -1,0 +1,23 @@
+src/
+├── assets/                # Arquivos estáticos globais (logo da UFAC, ícones, CSS global)
+├── contexts/              # (Opcional) Estados globais, como AuthContext para login
+├── routes/                # 📍 ONDE FICAM AS ROTAS E GUARDS!
+│   ├── index.tsx          # O arquivo que mapeia qual URL chama qual módulo
+│   └── AuthGuard.tsx      # Componente que protege rotas privadas
+│
+├── modules/               # 📦 SEUS MÓDULOS DE NEGÓCIO (A imagem que você mandou)
+│   ├── cursos/
+│   │   ├── components/
+│   │   ├── pages/         
+│   │   └── services/
+│   └── disciplinas/
+│       ├── components/
+│       ├── pages/         
+│       └── services/
+│
+├── shared/                # 🤝 COMPARTILHADOS ENTRE MÓDULOS
+│   ├── components/        # Ex: Navbar, Footer, Botão Padrão
+│   └── services/          # Ex: api.ts (configuração do Axios)
+│
+├── App.tsx                # O componente mestre que engloba as rotas e provedores
+└── main.tsx               # O arquivo obrigatório que o Vite procura para rodar o React
