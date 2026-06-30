@@ -125,7 +125,7 @@ class CurriculoViewSet(viewsets.ModelViewSet):
     queryset = Curriculo.objects.all().order_by('id_curriculo')
     serializer_class = CurriculoSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filterset_fields = ['curso', 'status', 'ano_inicio', 'regime_letivo']
+    filterset_fields = ['curso', 'status', 'regime_letivo']
 
 class DisciplinaViewSet(viewsets.ModelViewSet):
     queryset = Disciplina.objects.all().order_by('id_disciplina')

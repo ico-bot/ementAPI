@@ -17,7 +17,8 @@ from .models import (
 class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
-        fields = "__all__"
+        # Segurança: Escondendo senha e permissões do AbstractUser
+        exclude = ['password', 'groups', 'user_permissions', 'is_superuser', 'is_staff']
 
 class DocenteSerializer(serializers.ModelSerializer):
     class Meta:
@@ -30,6 +31,9 @@ class UnidadeSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class CursoSerializer(serializers.ModelSerializer):
+    # Trazendo o nome do coordenador em vez de apenas o ID para facilitar a leitura
+    nome_coordenador = serializers.CharField(source='coordenador.nome_docente', read_only=True)
+
     class Meta:
         model = Curso
         fields = "__all__"
@@ -47,12 +51,14 @@ class CursoSerializer(serializers.ModelSerializer):
 
         for campo in campos_conflito:
             atributo_final = f"{campo}_final"
-            if hasattr(instance, atributo_final):
+            # Substitui o valor do campo original pelo valor consolidado, se existir
+            if hasattr(instance, atributo_final) and getattr(instance, atributo_final) is not None:
                 data[campo] = getattr(instance, atributo_final)
                 
         return data
 
     def update(self, instance, validated_data):
+        # Impede a alteração do código do curso, pois é a chave de integração com a UFAC
         validated_data.pop('codigo_curso', None)
 
         edicao, created = CursoEdicaoUsuario.objects.get_or_create(curso=instance)
@@ -65,6 +71,8 @@ class CursoSerializer(serializers.ModelSerializer):
         return Curso.objects.consolidados().get(pk=instance.pk)
 
 class CurriculoSerializer(serializers.ModelSerializer):
+    nome_curso = serializers.CharField(source='curso.nome_curso', read_only=True)
+
     class Meta:
         model = Curriculo
         fields = "__all__"
@@ -75,11 +83,19 @@ class DisciplinaSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class CurriculoDisciplinaSerializer(serializers.ModelSerializer):
+    # DX: Trazendo os dados da disciplina junto com a grade para evitar múltiplas requisições do Front-end
+    codigo_disciplina = serializers.CharField(source='disciplina.codigo_disciplina', read_only=True)
+    nome_disciplina = serializers.CharField(source='disciplina.nome_disciplina', read_only=True)
+    carga_horaria = serializers.IntegerField(source='disciplina.carga_horaria', read_only=True)
+
     class Meta:
         model = CurriculoDisciplina
         fields = "__all__"
 
 class DocenteDisciplinaSerializer(serializers.ModelSerializer):
+    nome_docente = serializers.CharField(source='docente.nome_docente', read_only=True)
+    nome_disciplina = serializers.CharField(source='disciplina.nome_disciplina', read_only=True)
+
     class Meta:
         model = DocenteDisciplina
         fields = "__all__"

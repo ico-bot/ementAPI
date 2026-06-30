@@ -1,16 +1,19 @@
 from django.contrib import admin
+from django.contrib.auth.admin import UserAdmin
 from .models import (
-    Usuario, Docente, Unidade, Curso, Curriculo, 
+    Usuario, Docente, Unidade, Curso, CursoEdicaoUsuario, Curriculo, 
     Disciplina, CurriculoDisciplina, DocenteDisciplina, 
     PPC, DocumentoCurso
 )
 
 @admin.register(Usuario)
-class UsuarioAdmin(admin.ModelAdmin):
-    list_display = ('id_usuario', 'nome_usuario', 'cpf_usuario', 'email_usuario', 'created_at')
-    search_fields = ('nome_usuario', 'cpf_usuario', 'email_usuario')
-    list_filter = ('created_at',)
-    readonly_fields = ('created_at', 'updated_at')
+class CustomUsuarioAdmin(UserAdmin):
+    list_display = ('id', 'username', 'first_name', 'email', 'cpf_usuario', 'is_staff')
+    search_fields = ('username', 'first_name', 'email', 'cpf_usuario')
+    
+    fieldsets = UserAdmin.fieldsets + (
+        ('Informações Adicionais', {'fields': ('cpf_usuario',)}),
+    )
 
 @admin.register(Docente)
 class DocenteAdmin(admin.ModelAdmin):
@@ -44,11 +47,17 @@ class CursoAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ['coordenador']
 
+@admin.register(CursoEdicaoUsuario)
+class CursoEdicaoUsuarioAdmin(admin.ModelAdmin):
+    list_display = ('curso', 'nome_curso', 'modificado_por', 'updated_at')
+    search_fields = ('curso__nome_curso', 'nome_curso')
+    autocomplete_fields = ['curso', 'modificado_por']
+
 @admin.register(Curriculo)
 class CurriculoAdmin(admin.ModelAdmin):
-    list_display = ('id_curriculo', 'curso', 'versao', 'ano_inicio', 'semestre_inicio', 'status', 'total_creditos')
+    list_display = ('id_curriculo', 'curso', 'versao', 'status', 'total_creditos')
     search_fields = ('versao', 'curso__nome_curso')
-    list_filter = ('status', 'regime_letivo', 'ano_inicio')
+    list_filter = ('status', 'regime_letivo')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ['curso']
 

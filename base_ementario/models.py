@@ -1,11 +1,10 @@
 from django.db import models
 from django.db.models.functions import Coalesce
+from django.contrib.auth.models import AbstractUser
 
-class Usuario(models.Model):
-    id_usuario = models.AutoField(primary_key=True)
-    nome_usuario = models.CharField(max_length=255)
+
+class Usuario(AbstractUser):
     cpf_usuario = models.CharField(max_length=14, unique=True, null=True, blank=True)
-    email_usuario = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -13,9 +12,11 @@ class Usuario(models.Model):
         db_table = 'usuario'
 
     def __str__(self):
-        return self.nome_usuario
+        return self.username
+
 
 class Docente(models.Model):
+
     class Titulacao(models.TextChoices):
         GRADUACAO = 'Graduação', 'Graduação'
         ESPECIALIZACAO = 'Especialização', 'Especialização'
@@ -28,17 +29,17 @@ class Docente(models.Model):
         ASSISTENTE = 'Professor Assistente', 'Professor Assistente'
         TITULAR = 'Professor Titular', 'Professor Titular'
         SUBSTITUTO = 'Professor Substituto', 'Professor Substituto'
+        MAGISTERIO_SUPERIOR = 'Professor do Magistério Superior', 'Professor do Magistério Superior'
 
     id_docente = models.AutoField(primary_key=True)
     nome_docente = models.CharField(max_length=255)
     titulacao_docente = models.CharField(max_length=50, choices=Titulacao.choices, null=True, blank=True)
-    centro_lotacao = models.CharField(max_length=45, null=True, blank=True) 
+    centro_lotacao = models.CharField(max_length=255, null=True, blank=True) 
     unidade_vinculo = models.ForeignKey('Unidade', on_delete=models.SET_NULL, null=True, blank=True, related_name='docentes_vinculados')
     cursos_vinculados = models.ManyToManyField('Curso', related_name='corpo_docente', blank=True)
-    cargo_docente = models.CharField(max_length=50, choices=Cargo.choices, null=True, blank=True)
-    jornada_docente = models.IntegerField(null=True, blank=True)
+    cargo_docente = models.CharField(max_length=100, choices=Cargo.choices, null=True, blank=True)
+    jornada_docente = models.CharField(max_length=50, null=True, blank=True)
     tempo_casa_docente = models.IntegerField(null=True, blank=True)
-    email_docente = models.CharField(max_length=255, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -50,6 +51,7 @@ class Docente(models.Model):
 
     def __str__(self):
         return self.nome_docente
+
 
 class Unidade(models.Model):
     id_unidade = models.AutoField(primary_key=True)
@@ -68,6 +70,7 @@ class Unidade(models.Model):
     def __str__(self):
         return self.nome_unidade
 
+
 class CursoManager(models.Manager):
     def consolidados(self):
         return self.select_related('edicao_usuario').annotate(
@@ -82,6 +85,7 @@ class CursoManager(models.Manager):
             ato_reconhecimento_curso_final=Coalesce('edicao_usuario__ato_reconhecimento_curso', 'ato_reconhecimento_curso'),
             conceito_mec_curso_final=Coalesce('edicao_usuario__conceito_mec_curso', 'conceito_mec_curso'),
         )
+
 
 class Curso(models.Model):
     class Nivel(models.TextChoices):
@@ -129,6 +133,7 @@ class Curso(models.Model):
     def __str__(self):
         return f"{self.nome_curso} ({self.codigo_curso})"
 
+
 class CursoEdicaoUsuario(models.Model):
     curso = models.OneToOneField(
         Curso, 
@@ -152,6 +157,7 @@ class CursoEdicaoUsuario(models.Model):
     class Meta:
         db_table = 'curso_edicao_usuario'
 
+
 class Curriculo(models.Model):
     class Regime(models.TextChoices):
         SEMESTRAL = 'Semestral', 'Semestral'
@@ -164,7 +170,7 @@ class Curriculo(models.Model):
 
     id_curriculo = models.AutoField(primary_key=True)
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE, related_name='curriculos')
-    versao = models.CharField(max_length=50)
+    versao = models.CharField(max_length=120)
     ano_inicio = models.IntegerField()
     semestre_inicio = models.IntegerField()
     regime_letivo = models.CharField(max_length=20, choices=Regime.choices, default=Regime.SEMESTRAL)
@@ -189,9 +195,10 @@ class Curriculo(models.Model):
     def __str__(self):
         return f"{self.curso.nome_curso} - {self.versao} ({self.ano_inicio}/{self.semestre_inicio})"
 
+
 class Disciplina(models.Model):
     id_disciplina = models.AutoField(primary_key=True)
-    codigo_disciplina = models.CharField(max_length=30, unique=True)
+    codigo_disciplina = models.CharField(max_length=120, unique=True)
     nome_disciplina = models.CharField(max_length=255)
     unidade = models.ForeignKey(Unidade, on_delete=models.SET_NULL, null=True, blank=True)
     cursos_vinculados = models.ManyToManyField(Curso, related_name='disciplinas_diretas', blank=True)
@@ -218,17 +225,19 @@ class Disciplina(models.Model):
     def __str__(self):
         return f"{self.codigo_disciplina} - {self.nome_disciplina}"
 
+
 class CurriculoDisciplina(models.Model):
     class Tipo(models.TextChoices):
         OBRIGATORIA = 'Obrigatória', 'Obrigatória'
         OPTATIVA = 'Optativa', 'Optativa'
         ELETIVA = 'Eletiva', 'Eletiva'
+        ATIVIDADES_COMPLEMENTARES_PG = 'Atividades Complementares de PG', 'Atividades Complementares de PG'
 
     id_curriculo_disciplina = models.AutoField(primary_key=True)
     curriculo = models.ForeignKey(Curriculo, on_delete=models.CASCADE)
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
     periodo = models.IntegerField()
-    tipo_disciplina = models.CharField(max_length=20, choices=Tipo.choices, default=Tipo.OBRIGATORIA)
+    tipo_disciplina = models.CharField(max_length=50, choices=Tipo.choices, default=Tipo.OBRIGATORIA)
     ordem_exibicao = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -241,6 +250,7 @@ class CurriculoDisciplina(models.Model):
 
     def __str__(self):
         return f"{self.curriculo} - {self.disciplina} ({self.periodo}º)"
+
 
 class DocenteDisciplina(models.Model):
     id_docente_disciplina = models.AutoField(primary_key=True)
@@ -257,6 +267,7 @@ class DocenteDisciplina(models.Model):
             models.Index(fields=['ano', 'semestre'], name='idx_ano_semestre_dd'),
         ]
 
+
 class PPC(models.Model):
     id_ppc = models.AutoField(primary_key=True)
     curriculo = models.OneToOneField(Curriculo, on_delete=models.CASCADE)
@@ -268,7 +279,9 @@ class PPC(models.Model):
     class Meta:
         db_table = 'ppc'
 
+
 class DocumentoCurso(models.Model):
+    
     class Tipo(models.TextChoices):
         REGULAMENTO = 'Regulamento', 'Regulamento'
         PORTARIA = 'Portaria', 'Portaria'
