@@ -138,7 +138,6 @@ class Curso(models.Model):
     ato_autorizacao_curso = models.TextField(null=True, blank=True)
     ato_reconhecimento_curso = models.TextField(null=True, blank=True)
     conceito_mec_curso = models.CharField(max_length=50, null=True, blank=True)
-    inserido_manualmente = models.BooleanField(default=False)
     coordenador = models.ForeignKey(
         Docente, on_delete=models.SET_NULL, null=True, blank=True, db_column='coordenador_id')
     created_at = models.DateTimeField(auto_now_add=True)
@@ -202,8 +201,8 @@ class Curriculo(models.Model):
     curso = models.ForeignKey(
         Curso, on_delete=models.CASCADE, related_name='curriculos')
     versao = models.CharField(max_length=120)
-    ano_inicio = models.IntegerField()
-    semestre_inicio = models.IntegerField()
+    ano_inicio = models.IntegerField(default=2024)
+    semestre_inicio = models.IntegerField(default=1)
     regime_letivo = models.CharField(
         max_length=20, choices=Regime.choices, default=Regime.SEMESTRAL)
     num_periodos_ideal = models.IntegerField(null=True, blank=True)
@@ -250,6 +249,8 @@ class Disciplina(models.Model):
     avaliacao = models.TextField(null=True, blank=True)
     bibliografia_basica = models.TextField(null=True, blank=True)
     bibliografia_complementar = models.TextField(null=True, blank=True)
+    inserido_manualmente = models.BooleanField(default=False)
+    editado_manualmente = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -277,7 +278,7 @@ class CurriculoDisciplina(models.Model):
     id_curriculo_disciplina = models.AutoField(primary_key=True)
     curriculo = models.ForeignKey(Curriculo, on_delete=models.CASCADE)
     disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE)
-    periodo = models.IntegerField()
+    periodo = models.IntegerField(default=1)
     tipo_disciplina = models.CharField(
         max_length=50, choices=Tipo.choices, default=Tipo.OBRIGATORIA)
     ordem_exibicao = models.IntegerField(default=0)
@@ -303,8 +304,8 @@ class DocenteDisciplina(models.Model):
         Disciplina, on_delete=models.CASCADE, related_name='vinculos_docentes')
     curso = models.ForeignKey(
         Curso, on_delete=models.CASCADE, related_name='docentes_disciplinas')
-    ano = models.IntegerField()
-    semestre = models.IntegerField()
+    ano = models.IntegerField(default=2024)
+    semestre = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

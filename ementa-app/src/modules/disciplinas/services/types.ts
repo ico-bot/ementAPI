@@ -17,6 +17,15 @@ export interface DocenteResumo {
   titulacao?: string;
 }
 
+export interface ProjetoPedagogicoCurso {
+  id: string;
+  curriculoId: string;
+  conteudo?: string;
+  arquivoUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Disciplina {
   id: string;
   codigo: string;
@@ -36,6 +45,9 @@ export interface Disciplina {
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
   preRequisitos?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface DisciplinaGlobalItem {
@@ -60,6 +72,9 @@ export interface DisciplinaGlobalItem {
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
   preRequisitos?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface Curriculo {
@@ -75,6 +90,7 @@ export interface Curriculo {
   cargaHorariaTotal: number;
   status: StatusCurriculo;
   corpoDocente?: DocenteResumo[]; // Todos os professores vinculados ao curso na matriz
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface FiltrosDisciplina {

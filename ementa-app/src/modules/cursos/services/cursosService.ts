@@ -32,6 +32,8 @@ export interface CursoBackendDto {
   funcionamento_curso_final?: string;
   grau_academico_final?: string;
   conceito_mec_curso_final?: string;
+  editado_manualmente?: boolean;
+  inserido_manualmente?: boolean;
 }
 
 /**
@@ -59,6 +61,8 @@ export function mapCursoDtoToFrontend(dto: CursoBackendDto): Curso {
     grauAcademico: dto.grau_academico_final || dto.grau_academico || undefined,
     conceitoMec: dto.conceito_mec_curso_final || dto.conceito_mec_curso || undefined,
     coordenador: dto.nome_coordenador ? { id: String(dto.coordenador || ''), nome: dto.nome_coordenador } : undefined,
+    editadoManualmente: dto.editado_manualmente || false,
+    inseridoManualmente: dto.inserido_manualmente || false,
   };
 }
 

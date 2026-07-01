@@ -84,6 +84,7 @@ export const DISCIPLINAS_MOCK: Record<string, Disciplina[]> = {
         { id: 'doc-12', nome: 'Dr. Daricélio Soares', titulacao: 'Doutorado' },
         { id: 'doc-13', nome: 'Esp. Linus Torvalds', titulacao: 'Especialização' }
       ],
+      editadoManualmente: true,
     },
     {
       id: 'disc-103',

@@ -124,6 +124,14 @@ export const DisciplinasTable: React.FC<DisciplinasTableProps> = ({
                     </span>
                   </div>
                 )}
+                {(disc.editadoManualmente || disc.inseridoManualmente) && (
+                  <div className="mt-1 flex items-center gap-1.5 text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-md w-fit font-sans shadow-sm" title="Protegida contra extração periódica">
+                    <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h 12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    </svg>
+                    <span>{disc.inseridoManualmente ? 'Personalizada' : 'Protegida (Edição Manual)'}</span>
+                  </div>
+                )}
                 <div className="text-xs text-slate-400 mt-1 flex items-center gap-2 font-mono">
                   <span>{disc.cargaHoraria}h</span>
                   {disc.unidade && (

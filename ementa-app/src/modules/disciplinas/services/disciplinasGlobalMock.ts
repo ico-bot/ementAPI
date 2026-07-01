@@ -21,6 +21,7 @@ export const disciplinasGlobalMock: DisciplinaGlobalItem[] = [
     ementa: 'Conceitos fundamentais de computação, arquitetura de computadores básica e evolução histórica tecnológica.',
     objetivos: 'Apresentar aos discentes o universo do processamento de dados e os fundamentos do hardware e software.',
     bibliografiaBasica: 'CAPRON, H. L.; JOHNSON, J. A. Introdução à Informática. 8. ed. Pearson, 2004.',
+    editadoManualmente: true,
   },
   {
     id: 'g2',

@@ -8,7 +8,14 @@ export interface LoginCredentials {
   password?: string;
 }
 
+export interface JwtTokenDto {
+  access: string;
+  refresh: string;
+}
+
 export interface LoginResponse {
   success: boolean;
   username: string;
+  accessToken?: string;
+  refreshToken?: string;
 }

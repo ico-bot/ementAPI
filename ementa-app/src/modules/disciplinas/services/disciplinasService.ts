@@ -16,6 +16,7 @@ import type {
   FiltrosDisciplinaGlobal,
   NivelDisciplina,
   PaginatedResponse,
+  ProjetoPedagogicoCurso,
   TurnoDisciplina,
 } from './types';
 
@@ -41,6 +42,8 @@ export interface DisciplinaBackendDto {
   avaliacao?: string;
   bibliografia_basica?: string;
   bibliografia_complementar?: string;
+  editado_manualmente?: boolean;
+  inserido_manualmente?: boolean;
 }
 
 export interface CurriculoDisciplinaBackendDto {
@@ -53,6 +56,69 @@ export interface CurriculoDisciplinaBackendDto {
   codigo_disciplina?: string;
   nome_disciplina?: string;
   carga_horaria?: number;
+  editado_manualmente?: boolean;
+  inserido_manualmente?: boolean;
+}
+
+export interface PPCBackendDto {
+  id_ppc: number;
+  curriculo: number;
+  conteudo?: string;
+  arquivo_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+const PPCS_MOCK: Record<string, ProjetoPedagogicoCurso> = {
+  '1': {
+    id: '1',
+    curriculoId: '1',
+    conteudo: 'Projeto Pedagógico do Curso de Bacharelado em Sistemas de Informação - UFAC. Diretrizes curriculares nacionais, formação em engenharia de software, gestão de TI e ciência de dados. Ênfase em inovação tecnológica e práticas extensionistas.',
+    arquivoUrl: 'https://www.ufac.br/portal/unidades-academicas/ccet/bsi/ppc_bsi_2023.pdf',
+    createdAt: '2023-02-15T10:00:00Z',
+    updatedAt: '2024-01-10T14:30:00Z',
+  },
+  '2': {
+    id: '2',
+    curriculoId: '2',
+    conteudo: 'Projeto Pedagógico do Curso de Engenharia de Software - UFAC. Estruturação baseada em métodos ágeis, arquitetura de sistemas escaláveis e qualidade de software profissional.',
+    arquivoUrl: 'https://www.ufac.br/portal/unidades-academicas/ccet/esoft/ppc_esoft_2024.pdf',
+    createdAt: '2024-01-20T09:00:00Z',
+    updatedAt: '2024-03-01T11:00:00Z',
+  },
+};
+
+/**
+ * Busca o Projeto Pedagógico de Curso (PPC) associado a uma matriz curricular (currículo).
+ */
+export async function fetchPPCByCurriculoId(curriculoId: string): Promise<ProjetoPedagogicoCurso | null> {
+  try {
+    const response = await apiClient<any>('/ppcs');
+    const dtos: PPCBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const foundDto = dtos.find((p) => String(p.curriculo) === String(curriculoId));
+    if (foundDto) {
+      return {
+        id: String(foundDto.id_ppc),
+        curriculoId: String(foundDto.curriculo),
+        conteudo: foundDto.conteudo || undefined,
+        arquivoUrl: foundDto.arquivo_url || undefined,
+        createdAt: foundDto.created_at,
+        updatedAt: foundDto.updated_at,
+      };
+    }
+  } catch (error) {
+    console.warn(`API de PPC indisponível ao buscar para o currículo ${curriculoId}. Utilizando mock local:`, error);
+  }
+
+  await delay(150);
+  return PPCS_MOCK[curriculoId] || {
+    id: `mock-ppc-${curriculoId}`,
+    curriculoId,
+    conteudo: 'Projeto Pedagógico do Curso vigente. Documento oficial contendo diretrizes curriculares, perfil do egresso, estrutura curricular e ementário institucional aprovado pelos conselhos superiores da universidade.',
+    arquivoUrl: 'https://www.ufac.br/portal/graduacao/ppc_institucional_vigente.pdf',
+    createdAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
 }
 
 const getInitialCourseForMock = (item: DisciplinaGlobalItem): { cursoId: string; cursoNome: string } => {
@@ -95,6 +161,8 @@ export function mapDisciplinaDtoToGlobalItem(dto: DisciplinaBackendDto): Discipl
     avaliacao: dto.avaliacao || undefined,
     bibliografiaBasica: dto.bibliografia_basica || undefined,
     bibliografiaComplementar: dto.bibliografia_complementar || undefined,
+    editadoManualmente: dto.editado_manualmente || false,
+    inseridoManualmente: dto.inserido_manualmente || false,
   };
 }
 
@@ -146,6 +214,13 @@ export async function fetchCurriculoByCursoId(cursoId: string): Promise<Curricul
     } catch (err) {
       console.warn('Erro ao carregar corpo docente da matriz curricular:', err);
     }
+
+    try {
+      const ppcData = await fetchPPCByCurriculoId(curr.id);
+      curr = { ...curr, ppc: ppcData };
+    } catch (err) {
+      console.warn('Erro ao buscar PPC da matriz curricular:', err);
+    }
   }
 
   return curr;
@@ -159,8 +234,9 @@ export async function fetchDisciplinasByCursoId(
   filtros?: FiltrosDisciplina
 ): Promise<Disciplina[]> {
   let disciplinas: Disciplina[] = [];
+  let curriculo: Curriculo | null = null;
   try {
-    const curriculo = await fetchCurriculoByCursoId(cursoId);
+    curriculo = await fetchCurriculoByCursoId(cursoId);
     if (curriculo) {
       const response = await apiClient<any>('/curriculo-disciplinas', { params: { curriculo: curriculo.id } });
       const dtos: CurriculoDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
@@ -175,6 +251,8 @@ export async function fetchDisciplinasByCursoId(
           periodoIdeal: cd.periodo,
           tipo: (cd.tipo_disciplina as any) || 'Obrigatória',
           notaMinimaAprovacao: 5.0,
+          editadoManualmente: cd.editado_manualmente || false,
+          inseridoManualmente: cd.inserido_manualmente || false,
         }));
       }
     }
@@ -187,7 +265,12 @@ export async function fetchDisciplinasByCursoId(
     disciplinas = courseDisciplinasState[cursoId] || [];
   }
 
-  // Enriquecer cada disciplina com os docentes vinculados ao lecionamento (/api/docente-disciplinas)
+  // Garantir que curriculo foi carregado caso falhe no try
+  if (!curriculo) {
+    curriculo = await fetchCurriculoByCursoId(cursoId);
+  }
+
+  // Enriquecer cada disciplina com os docentes vinculados e o PPC da matriz
   try {
     const vinculos = await fetchVinculosDocenteDisciplina({ cursoId });
     disciplinas = disciplinas.map((disc) => {
@@ -195,13 +278,18 @@ export async function fetchDisciplinasByCursoId(
         .filter((v) => v.disciplinaId === disc.id || (v.codigoDisciplina && v.codigoDisciplina === disc.codigo))
         .map((v) => ({ id: v.docenteId, nome: v.docenteNome }));
       
-      if (docentesDestaMateria.length > 0) {
-        return { ...disc, docentes: docentesDestaMateria };
-      }
-      return disc;
+      return {
+        ...disc,
+        docentes: docentesDestaMateria.length > 0 ? docentesDestaMateria : disc.docentes,
+        ppc: curriculo?.ppc || disc.ppc || null,
+      };
     });
   } catch (err) {
     console.warn('Erro ao mapear professores para disciplinas do curso:', err);
+    disciplinas = disciplinas.map((disc) => ({
+      ...disc,
+      ppc: curriculo?.ppc || disc.ppc || null,
+    }));
   }
 
   if (!filtros) {
@@ -344,6 +432,7 @@ export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem):
       avaliacao: updatedItem.avaliacao,
       bibliografia_basica: updatedItem.bibliografiaBasica,
       bibliografia_complementar: updatedItem.bibliografiaComplementar,
+      editado_manualmente: true,
     };
     const response = await apiClient<DisciplinaBackendDto>(`/disciplinas/${updatedItem.id}/`, {
       method: 'PATCH',
@@ -359,8 +448,9 @@ export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem):
   }
 
   await delay(200);
-  globalCatalogState = globalCatalogState.map((item) => (item.id === updatedItem.id ? updatedItem : item));
-  return updatedItem;
+  const updatedWithFlag = { ...updatedItem, editadoManualmente: true };
+  globalCatalogState = globalCatalogState.map((item) => (item.id === updatedItem.id ? updatedWithFlag : item));
+  return updatedWithFlag;
 }
 
 /**
@@ -385,6 +475,7 @@ export async function createDisciplina(
       bibliografia_basica: newDisc.bibliografiaBasica,
       bibliografia_complementar: newDisc.bibliografiaComplementar,
       cursos_vinculados: [Number(cursoId)],
+      inserido_manualmente: true,
     };
 
     const response = await apiClient<DisciplinaBackendDto>('/disciplinas/', {
@@ -396,6 +487,7 @@ export async function createDisciplina(
       const created: Disciplina = {
         ...newDisc,
         id: String(response.id_disciplina),
+        inseridoManualmente: true,
       };
       if (!courseDisciplinasState[cursoId]) {
         courseDisciplinasState[cursoId] = [];
@@ -412,6 +504,7 @@ export async function createDisciplina(
   const created: Disciplina = {
     ...newDisc,
     id,
+    inseridoManualmente: true,
   };
 
   if (!courseDisciplinasState[cursoId]) {
@@ -436,6 +529,7 @@ export async function createDisciplina(
     ementa: created.ementa,
     bibliografiaBasica: created.bibliografiaBasica,
     preRequisitos: created.preRequisitos,
+    inseridoManualmente: true,
     cursoId: curso?.id || cursoId,
     cursoNome: curso?.nome || 'Curso Associado',
   };

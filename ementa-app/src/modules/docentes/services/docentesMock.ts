@@ -34,7 +34,7 @@ export const DOCENTES_MOCK: Docente[] = [
   },
   {
     id: '3',
-    nome: 'Me. Linus Torvalds Lima',
+    nome: 'Dr. Daricelio Soares',
     titulacao: 'Mestrado',
     centroLotacao: 'CCEN - Centro de Ciências Exatas e da Natureza',
     unidadeVinculoId: '1',
@@ -60,7 +60,7 @@ export const DOCENTES_MOCK: Docente[] = [
   },
   {
     id: '5',
-    nome: 'Me. Donald Knuth Pereira',
+    nome: 'Me. Donald Trump Pereira',
     titulacao: 'Mestrado',
     centroLotacao: 'CCEN - Centro de Ciências Exatas e da Natureza',
     unidadeVinculoId: '1',
@@ -73,7 +73,7 @@ export const DOCENTES_MOCK: Docente[] = [
   },
   {
     id: '6',
-    nome: 'Esp. Margaret Hamilton Costa',
+    nome: 'Esp. Luiz Inácio Hamilton Costa',
     titulacao: 'Especialização',
     centroLotacao: 'CFCH - Centro de Filosofia e Ciências Humanas',
     unidadeVinculoId: '1',

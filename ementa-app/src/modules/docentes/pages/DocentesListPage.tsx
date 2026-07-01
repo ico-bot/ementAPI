@@ -81,6 +81,12 @@ export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurs
     <section className="space-y-6 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
+          <div className="flex items-center gap-2 mb-1.5">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-200 text-[11px] font-bold tracking-wide uppercase font-mono shadow-sm">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+              Sincronizado • /api/docentes/
+            </span>
+          </div>
           <h2 className="text-2xl font-bold tracking-tight text-white flex items-center gap-2.5">
             Corpo Docente da Instituição
             {!isLoading && (

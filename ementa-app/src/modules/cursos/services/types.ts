@@ -35,6 +35,8 @@ export interface Curso {
     nome: string;
   };
   descricao?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
 }
 
 export interface FiltrosCurso {

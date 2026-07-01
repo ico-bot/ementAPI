@@ -47,6 +47,8 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
 
   if (!docente) return null;
 
+  const totalCargaHoraria = vinculos.reduce((acc, curr) => acc + (curr.cargaHoraria || 60), 0);
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-slate-950/80 backdrop-blur-md animate-fade-in overflow-y-auto">
       <div className="relative w-full max-w-3xl rounded-3xl bg-gradient-to-br from-slate-900 via-purple-950/30 to-slate-900 border border-purple-500/30 shadow-[0_0_50px_-10px_rgba(168,85,247,0.3)] overflow-hidden my-auto max-h-[90vh] flex flex-col">
@@ -62,6 +64,15 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
               {docente.cargo && (
                 <span className="text-xs font-semibold px-3 py-1 rounded-full bg-slate-800 text-slate-300 border border-slate-700">
                   {docente.cargo}
+                </span>
+              )}
+              {(docente.editadoManualmente || docente.inseridoManualmente) ? (
+                <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
+                  ✏️ Personalizado
+                </span>
+              ) : (
+                <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+                  ⚡ API /api/docentes/
                 </span>
               )}
             </div>
@@ -100,8 +111,8 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
           </div>
 
           <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5">
-            <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Total Matérias</span>
-            <strong className="text-sm font-bold text-emerald-300">{vinculos.length}</strong>
+            <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Carga Didática</span>
+            <strong className="text-sm font-bold text-emerald-300">{totalCargaHoraria}h ({vinculos.length} mat.)</strong>
           </div>
 
           <div className="p-3 rounded-2xl bg-white/[0.03] border border-white/5">
@@ -167,9 +178,12 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
                     className="p-4 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-3 transition-colors"
                   >
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="px-2 py-0.5 rounded-md bg-purple-500/20 text-purple-300 text-[11px] font-mono font-bold">
                           {v.codigoDisciplina || 'DISC'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 text-[11px] font-mono border border-indigo-500/20">
+                          ⏱️ {v.cargaHoraria || 60}h
                         </span>
                         <span className="text-xs font-mono text-slate-400">
                           Período letivo: {v.ano}/{v.semestre}

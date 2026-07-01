@@ -29,6 +29,8 @@ export interface Docente {
   jornada?: string;
   tempoCasa?: number;
   email?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
 }
 
 export interface DocenteDisciplinaVinculo {
@@ -38,10 +40,13 @@ export interface DocenteDisciplinaVinculo {
   disciplinaId: string;
   disciplinaNome: string;
   codigoDisciplina?: string;
+  cargaHoraria?: number;
   cursoId: string;
   cursoNome?: string;
   ano: number;
   semestre: number;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
 }
 
 export interface FiltrosDocente {

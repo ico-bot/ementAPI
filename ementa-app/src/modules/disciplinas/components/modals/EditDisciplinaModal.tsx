@@ -63,6 +63,16 @@ export const EditDisciplinaModal: React.FC<EditDisciplinaModalProps> = ({
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4 text-sm">
+          <div className="p-3.5 rounded-xl bg-amber-500/10 border border-amber-500/25 flex items-start gap-3 text-amber-200 text-xs">
+            <svg className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+            <div>
+              <span className="font-bold block text-amber-300">Proteção de Dados Ativada</span>
+              Ao salvar alterações manuais, esta disciplina será protegida contra atualizações ou sobrescritas da extração periódica automática do site do ementário.
+            </div>
+          </div>
+
           <div>
             <label htmlFor="editNome" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
               Nome da Disciplina

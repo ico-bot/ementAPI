@@ -83,6 +83,53 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
         </div>
       </div>
 
+      {/* Projeto Pedagógico de Curso (PPC) Conectado à API /api/ppcs/ */}
+      {curriculo.ppc && (
+        <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/60 border border-purple-500/30 backdrop-blur-xl relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl animate-fade-in">
+          <div className="space-y-1.5 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/40 text-purple-200 text-[11px] font-bold tracking-wide uppercase font-mono shadow-sm">
+                <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
+                Conectado • API /api/ppcs/
+              </span>
+              {curriculo.ppc.updatedAt && (
+                <span className="text-xs text-slate-400 font-mono">
+                  Sincronizado em: {new Date(curriculo.ppc.updatedAt).toLocaleDateString('pt-BR')}
+                </span>
+              )}
+            </div>
+            <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
+              Projeto Pedagógico de Curso (PPC Vigente)
+            </h3>
+            {curriculo.ppc.conteudo ? (
+              <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                {curriculo.ppc.conteudo}
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 italic">
+                Documento institucional do Projeto Pedagógico sincronizado com o ementário da universidade.
+              </p>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            {curriculo.ppc.arquivoUrl && (
+              <a
+                href={curriculo.ppc.arquivoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all cursor-pointer hover:scale-105 active:scale-95"
+              >
+                <span>📄 Consultar PDF Oficial</span>
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </a>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Professores Vinculados à Matriz Curricular */}
       {curriculo.corpoDocente && curriculo.corpoDocente.length > 0 && (
         <div className="pt-5 border-t border-white/10 relative z-10 space-y-3">

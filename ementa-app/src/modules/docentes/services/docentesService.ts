@@ -4,6 +4,7 @@
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
+import { fetchCursos } from '../../cursos/services/cursosService';
 import { DOCENTE_DISCIPLINAS_MOCK, DOCENTES_MOCK } from './docentesMock';
 import type { CargoDocente, Docente, DocenteDisciplinaVinculo, FiltrosDocente, TitulacaoDocente } from './types';
 
@@ -21,6 +22,8 @@ export interface DocenteBackendDto {
   jornada_docente?: string;
   tempo_casa_docente?: number;
   email?: string;
+  editado_manualmente?: boolean;
+  inserido_manualmente?: boolean;
 }
 
 export interface DocenteDisciplinaBackendDto {
@@ -30,10 +33,13 @@ export interface DocenteDisciplinaBackendDto {
   disciplina: number;
   nome_disciplina?: string;
   codigo_disciplina?: string;
+  carga_horaria?: number;
   curso: number;
   nome_curso?: string;
   ano: number;
   semestre: number;
+  editado_manualmente?: boolean;
+  inserido_manualmente?: boolean;
 }
 
 /**
@@ -52,6 +58,8 @@ export function mapDocenteDtoToFrontend(dto: DocenteBackendDto): Docente {
     jornada: dto.jornada_docente || undefined,
     tempoCasa: dto.tempo_casa_docente || undefined,
     email: dto.email || undefined,
+    editadoManualmente: dto.editado_manualmente || false,
+    inseridoManualmente: dto.inserido_manualmente || false,
   };
 }
 
@@ -66,15 +74,39 @@ export function mapVinculoDtoToFrontend(dto: DocenteDisciplinaBackendDto): Docen
     disciplinaId: String(dto.disciplina),
     disciplinaNome: dto.nome_disciplina || `Disciplina #${dto.disciplina}`,
     codigoDisciplina: dto.codigo_disciplina || undefined,
+    cargaHoraria: dto.carga_horaria || 60,
     cursoId: String(dto.curso),
     cursoNome: dto.nome_curso || `Curso #${dto.curso}`,
     ano: dto.ano || 2026,
     semestre: dto.semestre || 1,
+    editadoManualmente: dto.editado_manualmente || false,
+    inseridoManualmente: dto.inserido_manualmente || false,
   };
 }
 
 let docentesLocalStore = [...DOCENTES_MOCK];
 let vinculosLocalStore = [...DOCENTE_DISCIPLINAS_MOCK];
+
+/**
+ * Enriquecedor que cruza vínculos de docentes com o catálogo de cursos para garantir nomes legíveis e carga horária.
+ */
+async function enrichVinculosWithCourses(vinculos: DocenteDisciplinaVinculo[]): Promise<DocenteDisciplinaVinculo[]> {
+  try {
+    const cursos = await fetchCursos();
+    const cursoMap = new Map(cursos.map((c) => [c.id, c.nome]));
+
+    return vinculos.map((v) => {
+      const realCursoNome = cursoMap.get(v.cursoId);
+      return {
+        ...v,
+        cursoNome: realCursoNome || (v.cursoNome?.startsWith('Curso #') ? `Curso (ID ${v.cursoId})` : v.cursoNome),
+        cargaHoraria: v.cargaHoraria || 60,
+      };
+    });
+  } catch (err) {
+    return vinculos.map((v) => ({ ...v, cargaHoraria: v.cargaHoraria || 60 }));
+  }
+}
 
 /**
  * Busca a listagem de docentes com suporte a filtros de busca por nome, titulação e cargo.
@@ -142,29 +174,33 @@ export async function fetchDisciplinasByDocenteId(docenteId: string): Promise<Do
     const response = await apiClient<any>('/docente-disciplinas', { params: { docente: docenteId } });
     if (response) {
       const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      return dtos.map(mapVinculoDtoToFrontend);
+      const mapped = dtos.map(mapVinculoDtoToFrontend);
+      return await enrichVinculosWithCourses(mapped);
     }
   } catch (error) {
     console.warn(`API /docente-disciplinas para docente ${docenteId} indisponível. Utilizando fallback local:`, error);
   }
 
   await delay(200);
-  return vinculosLocalStore.filter((v) => v.docenteId === docenteId);
+  const localFiltered = vinculosLocalStore.filter((v) => v.docenteId === docenteId);
+  return await enrichVinculosWithCourses(localFiltered);
 }
 
 /**
  * Busca todos os vínculos de docentes para um curso específico ou para uma disciplina específica.
  */
-export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string; disciplinaId?: string }): Promise<DocenteDisciplinaVinculo[]> {
+export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string; disciplinaId?: string; docenteId?: string }): Promise<DocenteDisciplinaVinculo[]> {
   try {
     const apiParams: Record<string, string> = {};
     if (params?.cursoId) apiParams.curso = params.cursoId;
     if (params?.disciplinaId) apiParams.disciplina = params.disciplinaId;
+    if (params?.docenteId) apiParams.docente = params.docenteId;
 
     const response = await apiClient<any>('/docente-disciplinas', { params: apiParams });
     if (response) {
       const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      return dtos.map(mapVinculoDtoToFrontend);
+      const mapped = dtos.map(mapVinculoDtoToFrontend);
+      return await enrichVinculosWithCourses(mapped);
     }
   } catch (error) {
     console.warn('API /docente-disciplinas indisponível. Utilizando fallback local:', error);
@@ -178,5 +214,8 @@ export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string
   if (params?.disciplinaId) {
     lista = lista.filter((v) => v.disciplinaId === params.disciplinaId);
   }
-  return lista;
+  if (params?.docenteId) {
+    lista = lista.filter((v) => v.docenteId === params.docenteId);
+  }
+  return await enrichVinculosWithCourses(lista);
 }

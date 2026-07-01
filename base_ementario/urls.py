@@ -1,5 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from . import views
 
 # O Router automatiza a criação dos endpoints da API
@@ -16,6 +17,10 @@ router.register(r'ppcs', views.PPCViewSet)
 router.register(r'documentos-curso', views.DocumentoCursoViewSet)
 
 urlpatterns = [
+    # Rotas de Autenticação JWT
+    path('login/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
     # Inclui todas as rotas geradas pelo router
     path('', include(router.urls)),
     

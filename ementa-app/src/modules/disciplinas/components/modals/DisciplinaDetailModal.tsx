@@ -200,6 +200,27 @@ export const DisciplinaDetailModal = <
               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line">
                 {disciplina.objetivos}
               </div>
+            ) : disciplina.ppc ? (
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-purple-200 font-medium">
+                    Objetivos alinhados às diretrizes institucionais do PPC do curso.
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                    {disciplina.ppc.conteudo || 'Consulte o documento oficial da matriz curricular sincronizado na API /api/ppcs/.'}
+                  </p>
+                </div>
+                {disciplina.ppc.arquivoUrl && (
+                  <a
+                    href={disciplina.ppc.arquivoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-[11px] font-semibold transition-all shrink-0"
+                  >
+                    Ver no PPC 📄
+                  </a>
+                )}
+              </div>
             ) : (
               <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
                 Objetivos não especificados no documento institucional.
@@ -216,6 +237,27 @@ export const DisciplinaDetailModal = <
             {disciplina.programa ? (
               <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line">
                 {disciplina.programa}
+              </div>
+            ) : disciplina.ppc ? (
+              <div className="p-4 rounded-xl bg-purple-950/20 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs text-purple-200 font-medium">
+                    Programa e ementário detalhados no Projeto Pedagógico de Curso (PPC).
+                  </p>
+                  <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                    {disciplina.ppc.conteudo || 'Consulte o arquivo oficial do PPC para o detalhamento aula a aula e bibliografias.'}
+                  </p>
+                </div>
+                {disciplina.ppc.arquivoUrl && (
+                  <a
+                    href={disciplina.ppc.arquivoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-[11px] font-semibold transition-all shrink-0"
+                  >
+                    Abrir Documento 📄
+                  </a>
+                )}
               </div>
             ) : (
               <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
@@ -284,6 +326,53 @@ export const DisciplinaDetailModal = <
               </h4>
               <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-400 whitespace-pre-line leading-relaxed">
                 {disciplina.bibliografiaComplementar}
+              </div>
+            </div>
+          )}
+
+          {/* Seção Dedicada ao Projeto Pedagógico de Curso (PPC) Integrado à API */}
+          {disciplina.ppc && (
+            <div className="space-y-3 pt-6 border-t border-white/10">
+              <div className="flex items-center justify-between">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
+                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                  Projeto Pedagógico do Curso (PPC • API /api/ppcs/)
+                </h4>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
+                  Sincronizado
+                </span>
+              </div>
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
+                <div className="space-y-1 flex-1">
+                  <p className="text-xs font-bold text-white flex items-center gap-2">
+                    <span>📄 Matriz Institucional</span>
+                    <span className="text-[10px] font-mono font-normal text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
+                      ID PPC: {disciplina.ppc.id}
+                    </span>
+                  </p>
+                  {disciplina.ppc.conteudo ? (
+                    <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                      {disciplina.ppc.conteudo}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-slate-400 italic">
+                      Documento pedagógico devidamente sincronizado para consulta na universidade.
+                    </p>
+                  )}
+                </div>
+                {disciplina.ppc.arquivoUrl && (
+                  <a
+                    href={disciplina.ppc.arquivoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all shrink-0 hover:scale-105 active:scale-95"
+                  >
+                    <span>Abrir PDF Completo</span>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                  </a>
+                )}
               </div>
             </div>
           )}

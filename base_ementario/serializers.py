@@ -82,11 +82,21 @@ class DisciplinaSerializer(serializers.ModelSerializer):
         model = Disciplina
         fields = "__all__"
 
+    def create(self, validated_data):
+        validated_data['inserido_manualmente'] = True
+        return super().create(validated_data)
+
+    def update(self, instance, validated_data):
+        validated_data['editado_manualmente'] = True
+        return super().update(instance, validated_data)
+
 class CurriculoDisciplinaSerializer(serializers.ModelSerializer):
     # DX: Trazendo os dados da disciplina junto com a grade para evitar múltiplas requisições do Front-end
     codigo_disciplina = serializers.CharField(source='disciplina.codigo_disciplina', read_only=True)
     nome_disciplina = serializers.CharField(source='disciplina.nome_disciplina', read_only=True)
     carga_horaria = serializers.IntegerField(source='disciplina.carga_horaria', read_only=True)
+    editado_manualmente = serializers.BooleanField(source='disciplina.editado_manualmente', read_only=True)
+    inserido_manualmente = serializers.BooleanField(source='disciplina.inserido_manualmente', read_only=True)
 
     class Meta:
         model = CurriculoDisciplina

@@ -56,6 +56,21 @@ export const DocenteCard: React.FC<DocenteCardProps> = ({
                 ★ Coordenador
               </span>
             )}
+            {(docente.editadoManualmente || docente.inseridoManualmente) ? (
+              <span
+                title="Registro editado/inserido manualmente e protegido contra sobrescrita automática"
+                className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1"
+              >
+                ✏️ Personalizado
+              </span>
+            ) : (
+              <span
+                title="Registro sincronizado diretamente com a API /api/docentes/"
+                className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1"
+              >
+                ⚡ API
+              </span>
+            )}
           </div>
 
           {docente.cargo && (

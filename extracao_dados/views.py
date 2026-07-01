@@ -56,7 +56,7 @@ def dashboard_overview(_request):
     sincronizados = Curso.objects.consolidados().filter(
         funcionamento_curso_final=Curso.Funcionamento.ATIVO).count()
     desatualizados = max(total_cursos - sincronizados, 0)
-    inseridos_manualmente = Curso.objects.filter(inserido_manualmente=True).count()
+    inseridos_manualmente = 0
 
     latest_candidates = [
         Curso.objects.order_by('-updated_at').values_list('updated_at', flat=True).first(),
