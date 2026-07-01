@@ -8,6 +8,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { CursosListPage } from '../modules/cursos/pages/CursosListPage';
 import { DisciplinasGlobalPage } from '../modules/disciplinas/pages/DisciplinasGlobalPage';
 import { DisciplinasPage } from '../modules/disciplinas/pages/DisciplinasPage';
+import { DocentesListPage } from '../modules/docentes/pages/DocentesListPage';
 import { LoginPage } from '../modules/login/pages/LoginPage';
 
 /**
@@ -31,6 +32,9 @@ export const AppRoutes: React.FC = () => {
 
       {/* Rota global de todas as disciplinas da instituição */}
       <Route path="/disciplinas" element={<DisciplinasGlobalPage />} />
+
+      {/* Rota do catálogo de corpo docente da instituição */}
+      <Route path="/docentes" element={<DocentesListPage />} />
 
       {/* Fallback (404): Redireciona caminhos inexistentes para a página inicial */}
       <Route path="*" element={<Navigate to="/cursos" replace />} />

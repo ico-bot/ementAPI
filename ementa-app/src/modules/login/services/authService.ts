@@ -10,7 +10,8 @@ import type { LoginCredentials, LoginResponse } from './types';
  * Permite acesso apenas com as credenciais admin / admin123.
  */
 export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
-  const { username, password } = credentials;
+  const username = credentials.username || '';
+  const password = credentials.password || '';
 
   // Atraso artificial de rede de 1 segundo
   await new Promise((resolve) => setTimeout(resolve, 1000));

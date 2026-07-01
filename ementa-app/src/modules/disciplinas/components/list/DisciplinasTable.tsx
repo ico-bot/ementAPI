@@ -114,14 +114,22 @@ export const DisciplinasTable: React.FC<DisciplinasTableProps> = ({
                 <div className="font-bold text-white group-hover:text-purple-300 transition-colors">
                   {disc.nome}
                 </div>
-                <div className="text-xs text-slate-400 mt-0.5 flex items-center gap-2 font-mono">
+                {disc.cursoNome && (
+                  <div className="mt-1 flex items-center gap-1.5 text-xs text-purple-300 bg-purple-950/40 border border-purple-500/20 px-2 py-0.5 rounded-md w-fit font-sans shadow-sm">
+                    <svg className="w-3.5 h-3.5 text-purple-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+                    </svg>
+                    <span className="truncate max-w-[260px]" title={disc.cursoNome}>
+                      {disc.cursoNome}
+                    </span>
+                  </div>
+                )}
+                <div className="text-xs text-slate-400 mt-1 flex items-center gap-2 font-mono">
                   <span>{disc.cargaHoraria}h</span>
                   {disc.unidade && (
-                    <>
-                      <span className="text-slate-500 truncate max-w-[200px] hidden sm:inline" title={disc.unidade}>
-                        {disc.unidade}
-                      </span>
-                    </>
+                    <span className="text-slate-500 truncate max-w-[200px] hidden sm:inline" title={disc.unidade}>
+                      • {disc.unidade}
+                    </span>
                   )}
                 </div>
               </td>

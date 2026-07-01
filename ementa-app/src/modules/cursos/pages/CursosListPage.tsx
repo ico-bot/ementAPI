@@ -7,7 +7,6 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CursoCard } from '../components/list/CursoCard';
 import { CursosFilterBar } from '../components/filters/CursosFilterBar';
-import { NewCursoModal } from '../components/modals/NewCursoModal';
 import { fetchCursos } from '../services/cursosService';
 import type { Curso, NivelCurso, StatusFuncionamento, TurnoCurso } from '../services/types';
 
@@ -19,7 +18,6 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
   const navigate = useNavigate();
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
   // Filter state variables (English names as per Rule 3)
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -74,17 +72,9 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
             )}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Pesquise, filtre e cadastre as matrizes curriculares da instituição
+            Consulte e filtre os cursos e matrizes curriculares extraídos da instituição
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setIsNewModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-sm shadow-lg shadow-purple-900/30 transition-all active:scale-95 cursor-pointer"
-        >
-          + Cadastrar Curso
-        </button>
       </div>
 
       <CursosFilterBar
@@ -133,12 +123,6 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
           ))}
         </div>
       )}
-
-      <NewCursoModal
-        isOpen={isNewModalOpen}
-        onClose={() => setIsNewModalOpen(false)}
-        onSuccess={loadCursos}
-      />
     </section>
   );
 };

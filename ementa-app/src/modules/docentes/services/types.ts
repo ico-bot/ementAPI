@@ -1,0 +1,51 @@
+/**
+ * @file types.ts
+ * @description Definições de interfaces e tipagens estritas para o domínio de Docentes e seus vínculos com disciplinas, espelhando os modelos em models.py.
+ */
+
+export type TitulacaoDocente =
+  | 'Graduação'
+  | 'Especialização'
+  | 'Mestrado'
+  | 'Doutorado'
+  | 'Pós-Doutorado';
+
+export type CargoDocente =
+  | 'Professor Adjunto'
+  | 'Professor Assistente'
+  | 'Professor Titular'
+  | 'Professor Substituto'
+  | 'Professor do Magistério Superior';
+
+export interface Docente {
+  id: string;
+  nome: string;
+  titulacao?: TitulacaoDocente;
+  centroLotacao?: string;
+  unidadeVinculoId?: string;
+  unidadeVinculoNome?: string;
+  cursosVinculados?: string[];
+  cargo?: CargoDocente;
+  jornada?: string;
+  tempoCasa?: number;
+  email?: string;
+}
+
+export interface DocenteDisciplinaVinculo {
+  id: string;
+  docenteId: string;
+  docenteNome: string;
+  disciplinaId: string;
+  disciplinaNome: string;
+  codigoDisciplina?: string;
+  cursoId: string;
+  cursoNome?: string;
+  ano: number;
+  semestre: number;
+}
+
+export interface FiltrosDocente {
+  termo?: string;
+  titulacao?: TitulacaoDocente | 'Todos';
+  cargo?: CargoDocente | 'Todos';
+}

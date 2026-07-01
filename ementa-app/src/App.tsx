@@ -54,6 +54,19 @@ function App() {
             >
               Todas as Disciplinas
             </NavLink>
+
+            <NavLink
+              to="/docentes"
+              className={({ isActive }) =>
+                `px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer ${
+                  isActive
+                    ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30 border border-purple-400/30 font-bold'
+                    : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+                }`
+              }
+            >
+              Corpo Docente
+            </NavLink>
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-auto">

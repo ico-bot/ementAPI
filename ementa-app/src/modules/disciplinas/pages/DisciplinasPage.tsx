@@ -86,9 +86,9 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
     setIsModalOpen(true);
   };
 
-  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>): Promise<void> => {
+  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>, targetCursoId: string): Promise<void> => {
     try {
-      await createDisciplina(cursoId, newDisc);
+      await createDisciplina(targetCursoId || cursoId, newDisc);
       await loadData(); // Recarrega a grade
     } catch (error) {
       console.error('Erro ao cadastrar nova disciplina:', error);
@@ -219,6 +219,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
         isOpen={isNewModalOpen}
         onClose={() => setIsNewModalOpen(false)}
         onSave={handleSaveNewDisciplina}
+        cursoIdPreSelecionado={cursoId}
       />
     </section>
   );

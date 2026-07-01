@@ -31,6 +31,8 @@ export interface Disciplina {
   objetivos?: string;
   ementa?: string;
   programa?: string;
+  metodologia?: string;
+  avaliacao?: string;
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
   preRequisitos?: string;
@@ -41,6 +43,8 @@ export interface DisciplinaGlobalItem {
   codigo: string;
   nome: string;
   area: string;
+  cursoId?: string;
+  cursoNome?: string;
   nivel: NivelDisciplina;
   turno: TurnoDisciplina;
   status: StatusDisciplina;
@@ -84,6 +88,7 @@ export interface FiltrosDisciplinaGlobal {
   area?: string | 'Todos';
   nivel?: NivelDisciplina | 'Todos';
   status?: StatusDisciplina | 'Todos';
+  cursoId?: string | 'Todos';
 }
 
 export interface PaginatedResponse<T> {

@@ -5,4 +5,3 @@ Esta pasta armazena os componentes de interface React do domínio de cursos orga
 ## Estrutura de Diretórios
 * **`list/`**: Componentes de exibição em lista ou cards (`CursoCard`).
 * **`filters/`**: Componentes de barra de pesquisa e seletores de filtragem (`CursosFilterBar`).
-* **`modals/`**: Modais de formulário e cadastro de cursos (`NewCursoModal`).

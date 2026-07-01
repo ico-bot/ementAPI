@@ -37,20 +37,6 @@ export interface Curso {
   descricao?: string;
 }
 
-export interface CursoInput {
-  nome: string;
-  codigo: string;
-  cargaHoraria: number;
-  periodos?: number;
-  funcionamento: StatusFuncionamento;
-  nivel: NivelCurso;
-  turno?: TurnoCurso;
-  modalidade?: ModalidadeCurso;
-  areaConhecimento?: string;
-  grauAcademico?: string;
-  descricao?: string;
-}
-
 export interface FiltrosCurso {
   termo?: string;
   funcionamento?: StatusFuncionamento | 'Todos';

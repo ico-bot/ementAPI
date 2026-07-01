@@ -16,10 +16,13 @@ import {
   updateDisciplinaGlobal,
   createDisciplina,
 } from '../services/disciplinasService';
+import { fetchCursos } from '../../cursos/services/cursosService';
+import type { Curso } from '../../cursos/services/types';
 import type { DisciplinaGlobalItem, NivelDisciplina, StatusDisciplina, Disciplina } from '../services/types';
 
 export const DisciplinasGlobalPage: React.FC = () => {
   const [disciplinas, setDisciplinas] = useState<DisciplinaGlobalItem[]>([]);
+  const [cursos, setCursos] = useState<Curso[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
   // Pagination states
@@ -33,6 +36,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
   const [selectedArea, setSelectedArea] = useState<string | 'Todos'>('Todos');
   const [selectedLevel, setSelectedLevel] = useState<NivelDisciplina | 'Todos'>('Todos');
   const [selectedStatus, setSelectedStatus] = useState<StatusDisciplina | 'Todos'>('Todos');
+  const [selectedCursoId, setSelectedCursoId] = useState<string | 'Todos'>('Todos');
 
   // Modal selection states
   const [detailsModalDisciplina, setDetailsModalDisciplina] = useState<DisciplinaGlobalItem | null>(null);
@@ -42,6 +46,10 @@ export const DisciplinasGlobalPage: React.FC = () => {
   // Cadastro modal state
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
+  useEffect(() => {
+    fetchCursos().then(setCursos).catch(console.error);
+  }, []);
+
   const loadCatalog = async (pageToLoad = currentPage, limit = itemsPerPage): Promise<void> => {
     setIsLoading(true);
     try {
@@ -50,6 +58,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
         area: selectedArea,
         nivel: selectedLevel,
         status: selectedStatus,
+        cursoId: selectedCursoId,
       });
 
       setDisciplinas(response.items);
@@ -69,7 +78,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchTerm, selectedArea, selectedLevel, selectedStatus]);
+  }, [searchTerm, selectedArea, selectedLevel, selectedStatus, selectedCursoId]);
 
   useEffect(() => {
     loadCatalog(currentPage, itemsPerPage);
@@ -92,9 +101,9 @@ export const DisciplinasGlobalPage: React.FC = () => {
     }
   };
 
-  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>): Promise<void> => {
+  const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>, cursoId: string): Promise<void> => {
     try {
-      await createDisciplina('1', newDisc); // Associa ao curso 1 por padrão no mock
+      await createDisciplina(cursoId, newDisc);
       await loadCatalog(1, itemsPerPage); // Recarrega o catálogo indo para a página 1
     } catch (error) {
       console.error('Erro ao criar disciplina no catálogo global:', error);
@@ -115,6 +124,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
     setSelectedArea('Todos');
     setSelectedLevel('Todos');
     setSelectedStatus('Todos');
+    setSelectedCursoId('Todos');
   };
 
   return (
@@ -148,7 +158,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
 
       {/* Barra de Pesquisa e Filtros */}
       <div className="p-3 rounded-2xl bg-slate-900/60 border border-slate-800/80 backdrop-blur-md space-y-4 shadow-lg">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <div>
             <label htmlFor="searchGlobalInput" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
               Buscar Código ou Nome
@@ -164,6 +174,25 @@ export const DisciplinasGlobalPage: React.FC = () => {
           </div>
 
           <div>
+            <label htmlFor="cursoFilterSelect" className="block text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1">
+              Curso Vinculado
+            </label>
+            <select
+              id="cursoFilterSelect"
+              value={selectedCursoId}
+              onChange={(e) => setSelectedCursoId(e.target.value)}
+              className="w-full bg-slate-950/80 text-slate-200 text-xs rounded-xl px-3.5 py-2.5 border border-slate-800 focus:outline-none focus:border-purple-500 cursor-pointer"
+            >
+              <option value="Todos">Todos os Cursos</option>
+              {cursos.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nome} ({c.codigo})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label htmlFor="areaFilterSelect" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
               Área de Conhecimento
             </label>
@@ -175,6 +204,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
             >
               <option value="Todos">Todas as Áreas</option>
               <option value="Ciências Exactas e Tecnológicas">Ciências Exactas e Tecnológicas</option>
+              <option value="Ciências Exatas e da Terra">Ciências Exatas e da Terra</option>
               <option value="Ciências da Saúde e Biológicas">Ciências da Saúde e Biológicas</option>
               <option value="Ciências Jurídicas e Sociais">Ciências Jurídicas e Sociais</option>
               <option value="Ciências Humanas e Letras">Ciências Humanas e Letras</option>
