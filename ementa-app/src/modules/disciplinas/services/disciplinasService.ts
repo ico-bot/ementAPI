@@ -121,6 +121,77 @@ export async function fetchPPCByCurriculoId(curriculoId: string): Promise<Projet
   };
 }
 
+/**
+ * Salva (cria ou atualiza) o Projeto Pedagógico de Curso no Back-End (/api/ppcs/).
+ * Previne sobrescrita automática e preserva edições manuais no ementário.
+ */
+export async function savePPC(
+  curriculoId: string,
+  data: { ppcId?: string; conteudo?: string; arquivoUrl?: string }
+): Promise<ProjetoPedagogicoCurso> {
+  const isUpdate = Boolean(data.ppcId && !data.ppcId.startsWith('mock-'));
+
+  try {
+    if (isUpdate) {
+      const response = await apiClient<PPCBackendDto>(`/ppcs/${data.ppcId}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          conteudo: data.conteudo,
+          arquivo_url: data.arquivoUrl,
+        }),
+      });
+      if (response && response.id_ppc) {
+        const saved: ProjetoPedagogicoCurso = {
+          id: String(response.id_ppc),
+          curriculoId: String(response.curriculo),
+          conteudo: response.conteudo || undefined,
+          arquivoUrl: response.arquivo_url || undefined,
+          createdAt: response.created_at,
+          updatedAt: response.updated_at || new Date().toISOString(),
+        };
+        PPCS_MOCK[curriculoId] = saved;
+        return saved;
+      }
+    } else {
+      const response = await apiClient<PPCBackendDto>('/ppcs/', {
+        method: 'POST',
+        body: JSON.stringify({
+          curriculo: Number(curriculoId) || 1,
+          conteudo: data.conteudo,
+          arquivo_url: data.arquivoUrl,
+        }),
+      });
+      if (response && response.id_ppc) {
+        const saved: ProjetoPedagogicoCurso = {
+          id: String(response.id_ppc),
+          curriculoId: String(response.curriculo),
+          conteudo: response.conteudo || undefined,
+          arquivoUrl: response.arquivo_url || undefined,
+          createdAt: response.created_at || new Date().toISOString(),
+          updatedAt: response.updated_at || new Date().toISOString(),
+        };
+        PPCS_MOCK[curriculoId] = saved;
+        return saved;
+      }
+    }
+  } catch (error) {
+    console.warn('Falha ao salvar PPC na API /api/ppcs/. Atualizando no mock local em memória:', error);
+  }
+
+  // Fallback local em memória para garantir continuidade de desenvolvimento e edições manuais
+  await delay(400);
+  const updatedMock: ProjetoPedagogicoCurso = {
+    id: data.ppcId || `mock-ppc-${curriculoId}-${Date.now()}`,
+    curriculoId,
+    conteudo: data.conteudo,
+    arquivoUrl: data.arquivoUrl,
+    createdAt: PPCS_MOCK[curriculoId]?.createdAt || new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+  PPCS_MOCK[curriculoId] = updatedMock;
+  return updatedMock;
+}
+
 const getInitialCourseForMock = (item: DisciplinaGlobalItem): { cursoId: string; cursoNome: string } => {
   if (item.codigo.startsWith('BSI')) return { cursoId: '1', cursoNome: 'Bacharelado em Sistemas de Informação' };
   if (item.codigo.startsWith('MAT') || item.codigo.startsWith('ESOFT') || item.codigo.startsWith('ENG')) return { cursoId: '2', cursoNome: 'Engenharia de Software' };

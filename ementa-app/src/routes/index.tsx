@@ -10,6 +10,8 @@ import { DisciplinasGlobalPage } from '../modules/disciplinas/pages/DisciplinasG
 import { DisciplinasPage } from '../modules/disciplinas/pages/DisciplinasPage';
 import { DocentesListPage } from '../modules/docentes/pages/DocentesListPage';
 import { LoginPage } from '../modules/login/pages/LoginPage';
+import { AdminDashboardPage } from '../modules/admin/pages/AdminDashboardPage';
+import { isAuthenticated } from '../modules/login/services/authService';
 
 /**
  * @component AppRoutes
@@ -35,6 +37,12 @@ export const AppRoutes: React.FC = () => {
 
       {/* Rota do catálogo de corpo docente da instituição */}
       <Route path="/docentes" element={<DocentesListPage />} />
+
+      {/* Rota protegida do painel administrativo institucional */}
+      <Route
+        path="/admin"
+        element={isAuthenticated() ? <AdminDashboardPage /> : <Navigate to="/login" replace />}
+      />
 
       {/* Fallback (404): Redireciona caminhos inexistentes para a página inicial */}
       <Route path="*" element={<Navigate to="/cursos" replace />} />

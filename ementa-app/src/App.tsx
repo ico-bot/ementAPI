@@ -67,6 +67,21 @@ function App() {
             >
               Corpo Docente
             </NavLink>
+
+            {isAuthenticated && (
+              <NavLink
+                to="/admin"
+                className={({ isActive }) =>
+                  `px-5 py-2.5 rounded-xl font-medium text-xs sm:text-sm transition-all cursor-pointer ${
+                    isActive
+                      ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-900/30 border border-purple-400/30 font-bold'
+                      : 'bg-slate-900/60 hover:bg-slate-800/80 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  }`
+                }
+              >
+                ⚙️ Painel Admin
+              </NavLink>
+            )}
           </div>
 
           <div className="flex items-center gap-3 self-end sm:self-auto">
@@ -81,7 +96,7 @@ function App() {
                 {/* Profile Badge */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/40 border border-slate-800 text-xs text-slate-300 font-medium">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono text-purple-300">{username}</span>
+                  <span className="font-mono text-purple-300">👑 {username} (Admin)</span>
                 </div>
                 <button
                   type="button"

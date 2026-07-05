@@ -3,8 +3,10 @@
  * @description Modal unificado de visualização detalhada de Disciplinas, suportando tanto o contexto de Matrizes Curriculares quanto o Catálogo Geral.
  */
 
-import React from 'react';
-import type { Disciplina, DisciplinaGlobalItem } from '../../services/types';
+import React, { useEffect, useState } from 'react';
+import type { Disciplina, DisciplinaGlobalItem, ProjetoPedagogicoCurso } from '../../services/types';
+import { isAuthenticated } from '../../../login/services/authService';
+import { EditPPCModal } from './EditPPCModal';
 
 export interface DisciplinaDetailModalProps<
   T extends Disciplina | DisciplinaGlobalItem = Disciplina | DisciplinaGlobalItem
@@ -23,9 +25,24 @@ export const DisciplinaDetailModal = <
   onClose,
   onEditClick,
 }: DisciplinaDetailModalProps<T>): React.ReactElement | null => {
+  const [isEditPpcOpen, setIsEditPpcOpen] = useState<boolean>(false);
+  const [localPpc, setLocalPpc] = useState<ProjetoPedagogicoCurso | null | undefined>(disciplina?.ppc);
+
+  useEffect(() => {
+    setLocalPpc(disciplina?.ppc);
+  }, [disciplina]);
+
   if (!isOpen || !disciplina) {
     return null;
   }
+
+  const activePpc = localPpc !== undefined ? localPpc : disciplina.ppc;
+  const targetCurriculoId = activePpc?.curriculoId || ('cursoId' in disciplina && disciplina.cursoId ? String(disciplina.cursoId) : '1');
+
+  const handlePpcSaved = (updatedPpc: ProjetoPedagogicoCurso) => {
+    setLocalPpc(updatedPpc);
+    disciplina.ppc = updatedPpc;
+  };
 
   // Type guards visuais
   const isCurriculoDisc = 'tipo' in disciplina;
@@ -331,28 +348,40 @@ export const DisciplinaDetailModal = <
           )}
 
           {/* Seção Dedicada ao Projeto Pedagógico de Curso (PPC) Integrado à API */}
-          {disciplina.ppc && (
+          {activePpc ? (
             <div className="space-y-3 pt-6 border-t border-white/10">
               <div className="flex items-center justify-between">
                 <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
                   <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
                   Projeto Pedagógico do Curso (PPC • API /api/ppcs/)
                 </h4>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
-                  Sincronizado
-                </span>
+                <div className="flex items-center gap-2">
+                  {isAuthenticated() && (
+                    <button
+                      type="button"
+                      onClick={() => setIsEditPpcOpen(true)}
+                      className="px-2.5 py-0.5 rounded-full bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-mono font-bold transition-all cursor-pointer shadow-sm"
+                      title="Editar ou vincular Projeto Pedagógico"
+                    >
+                      ✏️ Editar (Admin)
+                    </button>
+                  )}
+                  <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
+                    Sincronizado
+                  </span>
+                </div>
               </div>
               <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg animate-fade-in">
                 <div className="space-y-1 flex-1">
                   <p className="text-xs font-bold text-white flex items-center gap-2">
                     <span>📄 Matriz Institucional</span>
                     <span className="text-[10px] font-mono font-normal text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
-                      ID PPC: {disciplina.ppc.id}
+                      ID PPC: {activePpc.id}
                     </span>
                   </p>
-                  {disciplina.ppc.conteudo ? (
+                  {activePpc.conteudo ? (
                     <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                      {disciplina.ppc.conteudo}
+                      {activePpc.conteudo}
                     </p>
                   ) : (
                     <p className="text-xs text-slate-400 italic">
@@ -360,21 +389,58 @@ export const DisciplinaDetailModal = <
                     </p>
                   )}
                 </div>
-                {disciplina.ppc.arquivoUrl && (
-                  <a
-                    href={disciplina.ppc.arquivoUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all shrink-0 hover:scale-105 active:scale-95"
-                  >
-                    <span>Abrir PDF Completo</span>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                    </svg>
-                  </a>
-                )}
+                <div className="flex flex-wrap items-center gap-2 shrink-0">
+                  {activePpc.arquivoUrl && (
+                    <a
+                      href={activePpc.arquivoUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all shrink-0 hover:scale-105 active:scale-95"
+                    >
+                      <span>Abrir PDF Completo</span>
+                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                      </svg>
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
+          ) : (
+            isAuthenticated() && (
+              <div className="space-y-3 pt-6 border-t border-white/10 animate-fade-in">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
+                    <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
+                    Projeto Pedagógico do Curso (PPC • API /api/ppcs/)
+                  </h4>
+                </div>
+                <div className="p-4 rounded-2xl bg-purple-950/20 border border-dashed border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <p className="text-xs font-bold text-slate-200">Nenhum Projeto Pedagógico vinculado</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">Como Administrador, você pode cadastrar o documento oficial desta matriz.</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsEditPpcOpen(true)}
+                    className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-md"
+                  >
+                    <span>➕ Cadastrar PPC (Admin)</span>
+                  </button>
+                </div>
+              </div>
+            )
+          )}
+
+          {/* Modal de Edição de PPC (Admin) */}
+          {isEditPpcOpen && (
+            <EditPPCModal
+              curriculoId={targetCurriculoId}
+              cursoNome={'cursoNome' in disciplina && disciplina.cursoNome ? disciplina.cursoNome : disciplina.unidade || 'Curso da Disciplina'}
+              ppc={activePpc}
+              onClose={() => setIsEditPpcOpen(false)}
+              onSuccess={handlePpcSaved}
+            />
           )}
 
         </div>

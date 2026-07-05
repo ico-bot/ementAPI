@@ -3,14 +3,17 @@
  * @description Cabeçalho contendo informações resumidas e estatísticas da Matriz Curricular ativa de um Curso.
  */
 
-import React from 'react';
-import type { Curriculo } from '../../services/types';
+import React, { useState } from 'react';
+import type { Curriculo, ProjetoPedagogicoCurso } from '../../services/types';
+import { isAuthenticated } from '../../../login/services/authService';
+import { EditPPCModal } from '../modals/EditPPCModal';
 
 export interface CurriculoHeaderProps {
   curriculo: Curriculo;
   totalDisciplinas: number;
   onBackClick: () => void;
   onNewDisciplinaClick?: () => void;
+  onPPCUpdate?: (updatedPpc: ProjetoPedagogicoCurso) => void;
 }
 
 export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
@@ -18,7 +21,19 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
   totalDisciplinas,
   onBackClick,
   onNewDisciplinaClick,
+  onPPCUpdate,
 }) => {
+  const [isEditPpcOpen, setIsEditPpcOpen] = useState<boolean>(false);
+  const [localPpc, setLocalPpc] = useState<ProjetoPedagogicoCurso | null | undefined>(curriculo.ppc);
+
+  const activePpc = localPpc !== undefined ? localPpc : curriculo.ppc;
+
+  const handlePpcSaved = (updatedPpc: ProjetoPedagogicoCurso) => {
+    setLocalPpc(updatedPpc);
+    if (onPPCUpdate) {
+      onPPCUpdate(updatedPpc);
+    }
+  };
   return (
     <div className="relative p-6 md:p-8 rounded-3xl bg-gradient-to-br from-slate-900/90 via-purple-950/30 to-slate-900/90 border border-white/10 backdrop-blur-2xl shadow-2xl overflow-hidden space-y-6">
       <div className="absolute -top-24 -right-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -84,7 +99,7 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
       </div>
 
       {/* Projeto Pedagógico de Curso (PPC) Conectado à API /api/ppcs/ */}
-      {curriculo.ppc && (
+      {activePpc ? (
         <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-900/40 via-indigo-900/30 to-slate-900/60 border border-purple-500/30 backdrop-blur-xl relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-xl animate-fade-in">
           <div className="space-y-1.5 flex-1">
             <div className="flex flex-wrap items-center gap-2">
@@ -92,18 +107,18 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
                 <span className="w-1.5 h-1.5 rounded-full bg-purple-400 animate-ping" />
                 Conectado • API /api/ppcs/
               </span>
-              {curriculo.ppc.updatedAt && (
+              {activePpc.updatedAt && (
                 <span className="text-xs text-slate-400 font-mono">
-                  Sincronizado em: {new Date(curriculo.ppc.updatedAt).toLocaleDateString('pt-BR')}
+                  Sincronizado em: {new Date(activePpc.updatedAt).toLocaleDateString('pt-BR')}
                 </span>
               )}
             </div>
             <h3 className="text-base font-bold text-white tracking-tight flex items-center gap-2">
               Projeto Pedagógico de Curso (PPC Vigente)
             </h3>
-            {curriculo.ppc.conteudo ? (
+            {activePpc.conteudo ? (
               <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                {curriculo.ppc.conteudo}
+                {activePpc.conteudo}
               </p>
             ) : (
               <p className="text-xs text-slate-400 italic">
@@ -112,10 +127,10 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
             )}
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
-            {curriculo.ppc.arquivoUrl && (
+          <div className="flex flex-wrap items-center gap-2 shrink-0">
+            {activePpc.arquivoUrl && (
               <a
-                href={curriculo.ppc.arquivoUrl}
+                href={activePpc.arquivoUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all cursor-pointer hover:scale-105 active:scale-95"
@@ -126,8 +141,50 @@ export const CurriculoHeader: React.FC<CurriculoHeaderProps> = ({
                 </svg>
               </a>
             )}
+
+            {isAuthenticated() && (
+              <button
+                type="button"
+                onClick={() => setIsEditPpcOpen(true)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold transition-all cursor-pointer shadow-sm hover:scale-105"
+                title="Editar ou atualizar Projeto Pedagógico de Curso"
+              >
+                <span>✏️ Editar PPC (Admin)</span>
+              </button>
+            )}
           </div>
         </div>
+      ) : (
+        isAuthenticated() && (
+          <div className="p-5 rounded-2xl bg-purple-950/20 border border-dashed border-purple-500/30 relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 animate-fade-in">
+            <div>
+              <h3 className="text-sm font-bold text-slate-200 flex items-center gap-2">
+                <span>📄 Nenhum Projeto Pedagógico (PPC) cadastrado</span>
+              </h3>
+              <p className="text-xs text-slate-400 mt-0.5">
+                Como Administrador institucional, você pode vincular o documento oficial para esta matriz curricular.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsEditPpcOpen(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold transition-all cursor-pointer shrink-0 shadow-md"
+            >
+              <span>➕ Cadastrar PPC (Admin)</span>
+            </button>
+          </div>
+        )
+      )}
+
+      {/* Modal de Edição de PPC (Admin) */}
+      {isEditPpcOpen && (
+        <EditPPCModal
+          curriculoId={String(curriculo.id)}
+          cursoNome={curriculo.cursoNome}
+          ppc={activePpc}
+          onClose={() => setIsEditPpcOpen(false)}
+          onSuccess={handlePpcSaved}
+        />
       )}
 
       {/* Professores Vinculados à Matriz Curricular */}

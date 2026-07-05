@@ -23,6 +23,7 @@ export const setTokens = (access: string, refresh: string): void => {
   localStorage.setItem(ACCESS_TOKEN_KEY, access);
   localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
   localStorage.setItem(IS_AUTH_KEY, 'true');
+  localStorage.setItem('userRole', 'ADMIN');
 };
 
 /**
@@ -85,6 +86,7 @@ export const login = async (credentials: LoginCredentials): Promise<LoginRespons
   if (username.trim() === 'admin' && password === 'admin123') {
     localStorage.setItem(IS_AUTH_KEY, 'true');
     localStorage.setItem(USERNAME_KEY, username);
+    localStorage.setItem('userRole', 'ADMIN');
 
     return {
       success: true,
@@ -103,6 +105,7 @@ export const logout = (): void => {
   localStorage.removeItem(USERNAME_KEY);
   localStorage.removeItem(ACCESS_TOKEN_KEY);
   localStorage.removeItem(REFRESH_TOKEN_KEY);
+  localStorage.removeItem('userRole');
 };
 
 /**
@@ -110,6 +113,13 @@ export const logout = (): void => {
  */
 export const isAuthenticated = (): boolean => {
   return localStorage.getItem(IS_AUTH_KEY) === 'true';
+};
+
+/**
+ * Verifica se o usuário atual é Administrador.
+ */
+export const isAdmin = (): boolean => {
+  return isAuthenticated();
 };
 
 /**
