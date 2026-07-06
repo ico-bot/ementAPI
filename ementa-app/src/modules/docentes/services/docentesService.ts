@@ -5,7 +5,7 @@
 
 import { apiClient } from '../../../shared/services/apiClient';
 import { fetchCursos } from '../../cursos/services/cursosService';
-import type { CargoDocente, Docente, DocenteDisciplinaVinculo, FiltrosDocente, TitulacaoDocente } from './types';
+import type { CargoDocente, Docente, DocenteDisciplinaVinculo, FiltrosDocente, PaginatedResponse, TitulacaoDocente } from './types';
 
 export interface DocenteBackendDto {
   id_docente: number;
@@ -107,7 +107,9 @@ async function enrichVinculosWithCourses(vinculos: DocenteDisciplinaVinculo[]): 
  */
 export async function fetchDocentes(filtros?: FiltrosDocente): Promise<Docente[]> {
   try {
-    const params: Record<string, string | undefined> = {};
+    const params: Record<string, string | number | undefined> = {
+      page_size: 1000,
+    };
     if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
     if (filtros?.titulacao && filtros.titulacao !== 'Todos') params.titulacao_docente = filtros.titulacao;
     if (filtros?.cargo && filtros.cargo !== 'Todos') params.cargo_docente = filtros.cargo;
@@ -117,6 +119,47 @@ export async function fetchDocentes(filtros?: FiltrosDocente): Promise<Docente[]
     return dtos.map(mapDocenteDtoToFrontend);
   } catch (error) {
     console.error('Erro ao buscar docentes na API:', error);
+    throw error;
+  }
+}
+
+/**
+ * Busca a listagem de docentes de forma paginada com suporte a filtros.
+ * @param page Número da página (1-indexed)
+ * @param itemsPerPage Quantidade de itens por página
+ * @param filtros Filtros opcionais de termo, titulação e cargo
+ * @returns Resposta paginada contendo a lista de docentes e metadados da paginação
+ */
+export async function fetchDocentesPaginated(
+  page: number,
+  itemsPerPage: number,
+  filtros?: FiltrosDocente
+): Promise<PaginatedResponse<Docente>> {
+  try {
+    const params: Record<string, string | number | undefined> = {
+      page,
+      page_size: itemsPerPage,
+    };
+    if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
+    if (filtros?.titulacao && filtros.titulacao !== 'Todos') params.titulacao_docente = filtros.titulacao;
+    if (filtros?.cargo && filtros.cargo !== 'Todos') params.cargo_docente = filtros.cargo;
+
+    const response = await apiClient<any>('/docentes/', { params });
+    const dtos: DocenteBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const mapped = dtos.map(mapDocenteDtoToFrontend);
+
+    return {
+      items: mapped,
+      totalItems,
+      totalCount: totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage,
+    };
+  } catch (error) {
+    console.error('Erro ao buscar docentes paginados na API:', error);
     throw error;
   }
 }
@@ -142,7 +185,7 @@ export async function fetchDocenteById(id: string): Promise<Docente | null> {
  */
 export async function fetchDisciplinasByDocenteId(docenteId: string): Promise<DocenteDisciplinaVinculo[]> {
   try {
-    const response = await apiClient<any>('/docente-disciplinas/', { params: { docente: docenteId } });
+    const response = await apiClient<any>('/docente-disciplinas/', { params: { docente: docenteId, page_size: 1000 } });
     const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
     const mapped = dtos.map(mapVinculoDtoToFrontend);
     return await enrichVinculosWithCourses(mapped);
@@ -157,7 +200,9 @@ export async function fetchDisciplinasByDocenteId(docenteId: string): Promise<Do
  */
 export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string; disciplinaId?: string; docenteId?: string }): Promise<DocenteDisciplinaVinculo[]> {
   try {
-    const apiParams: Record<string, string> = {};
+    const apiParams: Record<string, string | number> = {
+      page_size: 1000,
+    };
     if (params?.cursoId) apiParams.curso = params.cursoId;
     if (params?.disciplinaId) apiParams.disciplina = params.disciplinaId;
     if (params?.docenteId) apiParams.docente = params.docenteId;
@@ -168,6 +213,63 @@ export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string
     return await enrichVinculosWithCourses(mapped);
   } catch (error) {
     console.error('Erro ao buscar vínculos docente-disciplina na API:', error);
+    throw error;
+  }
+}
+
+/**
+ * Mapeia modelo do Front-End para payload de Docente do Back-End preservando sinalizadores manuais.
+ */
+function mapDocenteFrontendToPayload(docente: Partial<Docente>, isNew = false): Record<string, any> {
+  return {
+    nome_docente: docente.nome || 'Professor Não Identificado',
+    titulacao_docente: docente.titulacao || 'Mestrado',
+    centro_lotacao: docente.centroLotacao || 'CEPAE',
+    cargo_docente: docente.cargo || 'Professor Adjunto',
+    jornada_docente: docente.jornada || 'Dedicação Exclusiva (DE)',
+    tempo_casa_docente: docente.tempoCasa || 1,
+    email: docente.email || '',
+    editado_manualmente: true,
+    inserido_manualmente: isNew,
+  };
+}
+
+export async function createDocente(docente: Omit<Docente, 'id'>): Promise<Docente> {
+  try {
+    const payload = mapDocenteFrontendToPayload(docente, true);
+    const response = await apiClient<DocenteBackendDto>('/docentes/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return mapDocenteDtoToFrontend(response);
+  } catch (error) {
+    console.error('Erro ao criar docente na API:', error);
+    throw error;
+  }
+}
+
+export async function updateDocente(docente: Docente): Promise<Docente> {
+  try {
+    const payload = mapDocenteFrontendToPayload(docente, false);
+    const response = await apiClient<DocenteBackendDto>(`/docentes/${docente.id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return mapDocenteDtoToFrontend(response);
+  } catch (error) {
+    console.error(`Erro ao atualizar docente ${docente.id} na API:`, error);
+    throw error;
+  }
+}
+
+export async function deleteDocente(id: string): Promise<boolean> {
+  try {
+    await apiClient(`/docentes/${id}/`, {
+      method: 'DELETE',
+    });
+    return true;
+  } catch (error) {
+    console.error(`Erro ao excluir docente ${id} na API:`, error);
     throw error;
   }
 }

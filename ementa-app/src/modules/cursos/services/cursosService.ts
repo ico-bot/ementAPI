@@ -4,7 +4,7 @@
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
-import type { Curso, FiltrosCurso, ModalidadeCurso, NivelCurso, StatusFuncionamento, TurnoCurso } from './types';
+import type { Curso, FiltrosCurso, ModalidadeCurso, NivelCurso, PaginatedResponse, StatusFuncionamento, TurnoCurso } from './types';
 
 export interface CursoBackendDto {
   id_curso: number;
@@ -66,7 +66,9 @@ export function mapCursoDtoToFrontend(dto: CursoBackendDto): Curso {
 
 export const fetchCursos = async (filtros?: FiltrosCurso): Promise<Curso[]> => {
   try {
-    const params: Record<string, string | undefined> = {};
+    const params: Record<string, string | number | undefined> = {
+      page_size: 1000,
+    };
     if (filtros?.termo) params.search = filtros.termo;
     if (filtros?.funcionamento && filtros.funcionamento !== 'Todos') params.funcionamento_curso = filtros.funcionamento;
     if (filtros?.nivel && filtros.nivel !== 'Todos') params.nivel_curso = filtros.nivel;
@@ -81,6 +83,41 @@ export const fetchCursos = async (filtros?: FiltrosCurso): Promise<Curso[]> => {
   }
 };
 
+export const fetchCursosPaginated = async (
+  page: number,
+  itemsPerPage: number,
+  filtros?: FiltrosCurso
+): Promise<PaginatedResponse<Curso>> => {
+  try {
+    const params: Record<string, string | number | undefined> = {
+      page,
+      page_size: itemsPerPage,
+    };
+    if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
+    if (filtros?.funcionamento && filtros.funcionamento !== 'Todos') params.funcionamento_curso = filtros.funcionamento;
+    if (filtros?.nivel && filtros.nivel !== 'Todos') params.nivel_curso = filtros.nivel;
+    if (filtros?.turno && filtros.turno !== 'Todos') params.turno_curso = filtros.turno;
+
+    const response = await apiClient<any>('/cursos/', { params });
+    const dtos: CursoBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const mapped = dtos.map(mapCursoDtoToFrontend);
+
+    return {
+      items: mapped,
+      totalItems,
+      totalCount: totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage,
+    };
+  } catch (error) {
+    console.error('Erro ao buscar cursos paginados na API:', error);
+    throw error;
+  }
+};
+
 export const fetchCursoById = async (id: string): Promise<Curso | undefined> => {
   try {
     const response = await apiClient<CursoBackendDto>(`/cursos/${id}/`);
@@ -90,6 +127,64 @@ export const fetchCursoById = async (id: string): Promise<Curso | undefined> => 
     return undefined;
   } catch (error) {
     console.error(`Erro ao buscar curso ${id} na API:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Mapeia modelo do Front-End para payload do Back-End com sinalizador de edição manual.
+ */
+function mapCursoFrontendToPayload(curso: Partial<Curso>, isNew = false): Record<string, any> {
+  return {
+    codigo_curso: curso.codigo || 'SEM-CODIGO',
+    nome_curso: curso.nome || 'Novo Curso',
+    nivel_curso: curso.nivel || 'Graduação',
+    turno_curso: curso.turno || 'Integral',
+    modalidade_curso: curso.modalidade || 'Presencial',
+    area_conhecimento_curso: curso.areaConhecimento || 'Ciências Exatas e da Terra',
+    funcionamento_curso: curso.funcionamento || 'Em atividade',
+    grau_academico: curso.grauAcademico || 'Bacharelado',
+    editado_manualmente: true,
+    inserido_manualmente: isNew,
+  };
+}
+
+export const createCurso = async (curso: Omit<Curso, 'id'>): Promise<Curso> => {
+  try {
+    const payload = mapCursoFrontendToPayload(curso, true);
+    const response = await apiClient<CursoBackendDto>('/cursos/', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    return mapCursoDtoToFrontend(response);
+  } catch (error) {
+    console.error('Erro ao criar curso na API:', error);
+    throw error;
+  }
+};
+
+export const updateCurso = async (curso: Curso): Promise<Curso> => {
+  try {
+    const payload = mapCursoFrontendToPayload(curso, false);
+    const response = await apiClient<CursoBackendDto>(`/cursos/${curso.id}/`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    return mapCursoDtoToFrontend(response);
+  } catch (error) {
+    console.error(`Erro ao atualizar curso ${curso.id} na API:`, error);
+    throw error;
+  }
+};
+
+export const deleteCurso = async (id: string): Promise<boolean> => {
+  try {
+    await apiClient(`/cursos/${id}/`, {
+      method: 'DELETE',
+    });
+    return true;
+  } catch (error) {
+    console.error(`Erro ao excluir curso ${id} na API:`, error);
     throw error;
   }
 };

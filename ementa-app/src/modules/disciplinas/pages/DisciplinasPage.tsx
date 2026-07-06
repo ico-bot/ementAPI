@@ -3,18 +3,15 @@
  * @description Tela contêiner principal do Módulo de Disciplinas, exibindo cabeçalho da matriz, filtros e grade de matérias.
  */
 
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CurriculoHeader } from '../components/matriz-curricular/CurriculoHeader';
 import { DisciplinaDetailModal } from '../components/modals/DisciplinaDetailModal';
 import { NewDisciplinaModal } from '../components/modals/NewDisciplinaModal';
 import { MatrizCurricularGrid } from '../components/matriz-curricular/MatrizCurricularGrid';
-import {
-  fetchCurriculoByCursoId,
-  fetchDisciplinasByCursoId,
-  createDisciplina,
-} from '../services/disciplinasService';
-import type { Curriculo, Disciplina, TipoDisciplina } from '../services/types';
+import { useCurriculoByCursoId, useDisciplinasByCursoId } from '../../../shared/hooks/queries/useDisciplinasQuery';
+import { useCreateDisciplinaMutation } from '../../../shared/hooks/queries/useDisciplinasMutations';
+import type { Disciplina, TipoDisciplina } from '../services/types';
 
 export interface DisciplinasPageProps {
   cursoId?: string;
@@ -37,10 +34,26 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
     }
   };
 
-  const [curriculo, setCurriculo] = useState<Curriculo | null>(null);
-  const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Filter state variables (English names as per Rule 3)
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [selectedPeriod, setSelectedPeriod] = useState<number | 'Todos'>('Todos');
+  const [selectedType, setSelectedType] = useState<TipoDisciplina | 'Todos'>('Todos');
+
+  const { data: curriculo, isLoading: isCurriculoLoading, error: curriculoError, refetch: refetchCurriculo } = useCurriculoByCursoId(cursoId);
+  const { data: disciplinasData, isLoading: isDisciplinasLoading, error: disciplinasError, refetch: refetchDisciplinas } = useDisciplinasByCursoId(
+    cursoId,
+    {
+      termo: searchTerm,
+      periodo: selectedPeriod,
+      tipo: selectedType,
+    }
+  );
+
+  const createDisciplinaMutation = useCreateDisciplinaMutation();
+
+  const disciplinas = disciplinasData || [];
+  const isLoading = isCurriculoLoading || isDisciplinasLoading;
+  const error = (curriculoError || disciplinasError) ? 'Não foi possível carregar a matriz curricular e as disciplinas. Verifique a conexão com o servidor.' : null;
 
   // Modal detail state
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
@@ -49,41 +62,6 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
   // Modal de criação
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
-  // Filter state variables (English names as per Rule 3)
-  const [searchTerm, setSearchTerm] = useState<string>('');
-  const [selectedPeriod, setSelectedPeriod] = useState<number | 'Todos'>('Todos');
-  const [selectedType, setSelectedType] = useState<TipoDisciplina | 'Todos'>('Todos');
-
-  const loadData = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [currData, discData] = await Promise.all([
-        fetchCurriculoByCursoId(cursoId),
-        fetchDisciplinasByCursoId(cursoId, {
-          termo: searchTerm,
-          periodo: selectedPeriod,
-          tipo: selectedType,
-        }),
-      ]);
-      setCurriculo(currData);
-      setDisciplinas(discData);
-    } catch (err: any) {
-      console.error('Erro ao carregar dados do ementário:', err);
-      setError('Não foi possível carregar a matriz curricular e as disciplinas. Verifique a conexão com o servidor.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      loadData();
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [cursoId, searchTerm, selectedPeriod, selectedType]);
-
   const handleOpenDetail = (disciplina: Disciplina) => {
     setSelectedDisciplina(disciplina);
     setIsModalOpen(true);
@@ -91,8 +69,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
 
   const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>, targetCursoId: string): Promise<void> => {
     try {
-      await createDisciplina(targetCursoId || cursoId, newDisc);
-      await loadData(); // Recarrega a grade
+      await createDisciplinaMutation.mutateAsync({ cursoId: targetCursoId || cursoId, disciplina: newDisc });
     } catch (error) {
       console.error('Erro ao cadastrar nova disciplina:', error);
     }
@@ -122,7 +99,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
           <div className="pt-2">
             <button
               type="button"
-              onClick={loadData}
+              onClick={() => { refetchCurriculo(); refetchDisciplinas(); }}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

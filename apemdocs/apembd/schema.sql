@@ -84,7 +84,7 @@ COMMENT='Cursos oferecidos pela instituição';
 CREATE TABLE IF NOT EXISTS curriculo (
     id_curriculo INT AUTO_INCREMENT PRIMARY KEY,
     curso_id INT NOT NULL,
-    versao VARCHAR(50) NOT NULL COMMENT 'Ex: Versão 01, Versão 1',
+    versao VARCHAR(120) NOT NULL COMMENT 'Ex: Versão 01, Versão 1',
     ano_inicio INT NOT NULL,
     semestre_inicio INT NOT NULL COMMENT '1 ou 2',
     regime_letivo ENUM('Semestral', 'Anual') DEFAULT 'Semestral',
@@ -112,7 +112,7 @@ COMMENT='Versões de currículos dos cursos';
 -- ============================================================
 CREATE TABLE IF NOT EXISTS disciplina (
     id_disciplina INT AUTO_INCREMENT PRIMARY KEY,
-    codigo_disciplina VARCHAR(30) NOT NULL UNIQUE,
+    codigo_disciplina VARCHAR(120) NOT NULL UNIQUE,
     nome_disciplina VARCHAR(255) NOT NULL,
     unidade_id INT,
     carga_horaria INT,

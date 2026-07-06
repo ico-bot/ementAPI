@@ -5,7 +5,9 @@
 
 export interface PaginatedResponse<T> {
   items: T[];
-  totalCount: number;
+  totalItems: number;
+  totalCount?: number;
   currentPage: number;
   totalPages: number;
+  itemsPerPage: number;
 }

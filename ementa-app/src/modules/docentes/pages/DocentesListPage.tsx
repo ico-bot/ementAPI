@@ -5,13 +5,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { fetchCursos } from '../../cursos/services/cursosService';
-import type { Curso } from '../../cursos/services/types';
+import { Pagination } from '../../../shared/components/ui/Pagination';
 import { DocenteCard } from '../components/DocenteCard';
 import { DocenteDetailModal } from '../components/DocenteDetailModal';
 import { DocentesFilterBar } from '../components/DocentesFilterBar';
-import { fetchDocentes, fetchVinculosDocenteDisciplina } from '../services/docentesService';
-import type { CargoDocente, Docente, DocenteDisciplinaVinculo, TitulacaoDocente } from '../services/types';
+import { useCursos } from '../../../shared/hooks/queries/useCursosQuery';
+import { useDocentesPaginated, useVinculosDocenteDisciplina } from '../../../shared/hooks/queries/useDocentesQuery';
+import type { CargoDocente, Docente, TitulacaoDocente } from '../services/types';
 
 export interface DocentesListPageProps {
   onSelectCurso?: (cursoId: string) => void;
@@ -19,11 +19,9 @@ export interface DocentesListPageProps {
 
 export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurso }) => {
   const navigate = useNavigate();
-  const [docentes, setDocentes] = useState<Docente[]>([]);
-  const [vinculos, setVinculos] = useState<DocenteDisciplinaVinculo[]>([]);
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Pagination state variables
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Estados dos filtros (variáveis de estado lógico em inglês conforme Regra 3)
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -33,43 +31,45 @@ export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurs
   // Estado do Modal
   const [selectedDocente, setSelectedDocente] = useState<Docente | null>(null);
 
-  const loadData = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const [docentesData, vinculosData, cursosData] = await Promise.all([
-        fetchDocentes({
-          termo: searchTerm,
-          titulacao: selectedTitulacao,
-          cargo: selectedCargo,
-        }),
-        fetchVinculosDocenteDisciplina(),
-        fetchCursos(),
-      ]);
-
-      setDocentes(docentesData);
-      setVinculos(vinculosData);
-      setCursos(cursosData);
-    } catch (err: any) {
-      console.error('Erro ao carregar dados do catálogo de docentes:', err);
-      setError('Não foi possível carregar a lista de docentes. Verifique a conexão com o servidor.');
-    } finally {
-      setIsLoading(false);
+  const { data: docentesData, isLoading: isDocentesLoading, error: docentesError, refetch } = useDocentesPaginated(
+    currentPage,
+    itemsPerPage,
+    {
+      termo: searchTerm,
+      titulacao: selectedTitulacao,
+      cargo: selectedCargo,
     }
-  };
+  );
+  const { data: vinculosData, isLoading: isVinculosLoading } = useVinculosDocenteDisciplina();
+  const { data: cursosData, isLoading: isCursosLoading } = useCursos();
+
+  const docentes = docentesData?.items || [];
+  const totalItems = docentesData?.totalItems || 0;
+  const totalPages = docentesData?.totalPages || 1;
+  const vinculos = vinculosData || [];
+  const cursos = cursosData || [];
+
+  const isLoading = isDocentesLoading || isVinculosLoading || isCursosLoading;
+  const error = docentesError ? 'Não foi possível carregar a lista de docentes. Verifique a conexão com o servidor.' : null;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadData();
-    }, 300);
-
-    return () => clearTimeout(timer);
+    setCurrentPage(1);
   }, [searchTerm, selectedTitulacao, selectedCargo]);
+
+  const handlePageChange = (newPage: number): void => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (newCount: number): void => {
+    setItemsPerPage(newCount);
+    setCurrentPage(1);
+  };
 
   const handleResetFilters = (): void => {
     setSearchTerm('');
     setSelectedTitulacao('Todos');
     setSelectedCargo('Todos');
+    setCurrentPage(1);
   };
 
   const handleSelectCursoFromModal = (cursoId: string) => {
@@ -94,7 +94,7 @@ export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurs
             Corpo Docente da Instituição
             {!isLoading && (
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-purple-300 font-mono font-semibold border border-purple-500/20">
-                {docentes.length}
+                {totalItems}
               </span>
             )}
           </h2>
@@ -130,7 +130,7 @@ export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurs
           <div className="pt-2">
             <button
               type="button"
-              onClick={loadData}
+              onClick={() => refetch()}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -164,25 +164,38 @@ export const DocentesListPage: React.FC<DocentesListPageProps> = ({ onSelectCurs
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {docentes.map((docente) => {
-            const materiasCount = vinculos.filter((v) => v.docenteId === docente.id).length;
-            const cursosCoordenadosPorEste = cursos.filter((c) => c.coordenador?.id === docente.id || c.coordenador?.nome === docente.nome);
-            const isCoordenador = cursosCoordenadosPorEste.length > 0;
-            const cursoCoordenadoNome = isCoordenador ? cursosCoordenadosPorEste[0].nome : undefined;
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {docentes.map((docente) => {
+              const materiasCount = vinculos.filter((v) => v.docenteId === docente.id).length;
+              const cursosCoordenadosPorEste = cursos.filter((c) => c.coordenador?.id === docente.id || c.coordenador?.nome === docente.nome);
+              const isCoordenador = cursosCoordenadosPorEste.length > 0;
+              const cursoCoordenadoNome = isCoordenador ? cursosCoordenadosPorEste[0].nome : undefined;
 
-            return (
-              <DocenteCard
-                key={docente.id}
-                docente={docente}
-                totalDisciplinasLecionadas={materiasCount}
-                isCoordenador={isCoordenador}
-                cursoCoordenadoNome={cursoCoordenadoNome}
-                onClick={setSelectedDocente}
-              />
-            );
-          })}
-        </div>
+              return (
+                <DocenteCard
+                  key={docente.id}
+                  docente={docente}
+                  totalDisciplinasLecionadas={materiasCount}
+                  isCoordenador={isCoordenador}
+                  cursoCoordenadoNome={cursoCoordenadoNome}
+                  onClick={setSelectedDocente}
+                />
+              );
+            })}
+          </div>
+
+          {!isLoading && totalItems > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          )}
+        </>
       )}
 
       {selectedDocente && (

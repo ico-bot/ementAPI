@@ -127,7 +127,7 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
           {cursosCoordenados.length > 0 && (
             <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-amber-500/10 via-amber-600/5 to-transparent border border-amber-500/30 space-y-3">
               <div className="flex items-center gap-2">
-                <span className="text-lg">👑</span>
+                <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                 <h3 className="text-sm font-bold text-amber-300 uppercase tracking-wider font-mono">
                   Coordenação de Cursos ({cursosCoordenados.length})
                 </h3>
@@ -143,7 +143,7 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
                     }}
                     className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 text-xs font-bold border border-amber-500/40 transition-all cursor-pointer shadow-sm"
                   >
-                    <span>🎓 {curso.nome}</span>
+                    <span>{curso.nome}</span>
                     <span className="text-[10px] opacity-80">→ Abrir Grade</span>
                   </button>
                 ))}
@@ -183,14 +183,14 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
                           {v.codigoDisciplina || 'DISC'}
                         </span>
                         <span className="px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 text-[11px] font-mono border border-indigo-500/20">
-                          ⏱️ {v.cargaHoraria || 60}h
+                          {v.cargaHoraria || 60}h
                         </span>
                         <span className="text-xs font-mono text-slate-400">
                           {v.ano ? `Período letivo: ${v.ano}/${v.semestre}` : `Período: Flexível (${v.semestre}º Sem.)`}
                         </span>
                       </div>
                       <h4 className="text-sm font-bold text-slate-100">{v.disciplinaNome}</h4>
-                      <p className="text-xs text-slate-400 italic">🏫 {v.cursoNome}</p>
+                      <p className="text-xs text-slate-400 italic">{v.cursoNome}</p>
                     </div>
 
                     {onSelectCurso && (

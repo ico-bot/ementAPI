@@ -78,6 +78,8 @@ class CurriculoSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 class DisciplinaSerializer(serializers.ModelSerializer):
+    nome_unidade = serializers.CharField(source='unidade.nome_unidade', read_only=True)
+
     class Meta:
         model = Disciplina
         fields = "__all__"
@@ -91,10 +93,20 @@ class DisciplinaSerializer(serializers.ModelSerializer):
         return super().update(instance, validated_data)
 
 class CurriculoDisciplinaSerializer(serializers.ModelSerializer):
-    # DX: Trazendo os dados da disciplina junto com a grade para evitar múltiplas requisições do Front-end
+    # DX: Trazendo os dados completos da disciplina junto com a grade para evitar múltiplas requisições do Front-end
     codigo_disciplina = serializers.CharField(source='disciplina.codigo_disciplina', read_only=True)
     nome_disciplina = serializers.CharField(source='disciplina.nome_disciplina', read_only=True)
     carga_horaria = serializers.IntegerField(source='disciplina.carga_horaria', read_only=True)
+    creditos = serializers.IntegerField(source='disciplina.creditos', read_only=True)
+    nota_minima_aprovacao = serializers.DecimalField(source='disciplina.nota_minima_aprovacao', max_digits=3, decimal_places=1, read_only=True)
+    nome_unidade = serializers.CharField(source='disciplina.unidade.nome_unidade', read_only=True)
+    ementa = serializers.CharField(source='disciplina.ementa', read_only=True)
+    programa = serializers.CharField(source='disciplina.programa', read_only=True)
+    objetivos = serializers.CharField(source='disciplina.objetivos', read_only=True)
+    metodologia = serializers.CharField(source='disciplina.metodologia', read_only=True)
+    avaliacao = serializers.CharField(source='disciplina.avaliacao', read_only=True)
+    bibliografia_basica = serializers.CharField(source='disciplina.bibliografia_basica', read_only=True)
+    bibliografia_complementar = serializers.CharField(source='disciplina.bibliografia_complementar', read_only=True)
     editado_manualmente = serializers.BooleanField(source='disciplina.editado_manualmente', read_only=True)
     inserido_manualmente = serializers.BooleanField(source='disciplina.inserido_manualmente', read_only=True)
 

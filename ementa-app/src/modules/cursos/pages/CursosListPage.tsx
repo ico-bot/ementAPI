@@ -7,8 +7,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CursoCard } from '../components/list/CursoCard';
 import { CursosFilterBar } from '../components/filters/CursosFilterBar';
-import { fetchCursos } from '../services/cursosService';
-import type { Curso, NivelCurso, StatusFuncionamento, TurnoCurso } from '../services/types';
+import { Pagination } from '../../../shared/components/ui/Pagination';
+import { useCursosPaginated } from '../../../shared/hooks/queries/useCursosQuery';
+import type { NivelCurso, StatusFuncionamento, TurnoCurso } from '../services/types';
 
 export interface CursosListPageProps {
   onSelectCurso?: (cursoId: string) => void;
@@ -16,9 +17,9 @@ export interface CursosListPageProps {
 
 export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso }) => {
   const navigate = useNavigate();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+  // Pagination state variables
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Filter state variables (English names as per Rule 3)
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -26,40 +27,41 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
   const [selectedLevel, setSelectedLevel] = useState<NivelCurso | 'Todos'>('Todos');
   const [selectedShift, setSelectedShift] = useState<TurnoCurso | 'Todos'>('Todos');
 
-  const loadCursos = async (): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const data = await fetchCursos({
-        termo: searchTerm,
-        funcionamento: selectedFunctioning,
-        nivel: selectedLevel,
-        turno: selectedShift,
-      });
-      setCursos(data);
-    } catch (err: any) {
-      console.error('Erro ao buscar cursos filtrados:', err);
-      setError('Não foi possível carregar o catálogo de cursos. Verifique se o Back-End está online e tente novamente.');
-    } finally {
-      setIsLoading(false);
+  const { data, isLoading, error: queryError, refetch } = useCursosPaginated(
+    currentPage,
+    itemsPerPage,
+    {
+      termo: searchTerm,
+      funcionamento: selectedFunctioning,
+      nivel: selectedLevel,
+      turno: selectedShift,
     }
-  };
+  );
+
+  const cursos = data?.items || [];
+  const totalItems = data?.totalItems || 0;
+  const totalPages = data?.totalPages || 1;
+  const error = queryError ? 'Não foi possível carregar o catálogo de cursos. Verifique se o Back-End está online e tente novamente.' : null;
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      loadCursos();
-    }, 300);
-
-    return () => {
-      clearTimeout(debounceTimer);
-    };
+    setCurrentPage(1);
   }, [searchTerm, selectedFunctioning, selectedLevel, selectedShift]);
+
+  const handlePageChange = (newPage: number): void => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (newCount: number): void => {
+    setItemsPerPage(newCount);
+    setCurrentPage(1);
+  };
 
   const handleResetFilters = (): void => {
     setSearchTerm('');
     setSelectedFunctioning('Todos');
     setSelectedLevel('Todos');
     setSelectedShift('Todos');
+    setCurrentPage(1);
   };
 
   return (
@@ -70,7 +72,7 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
             Catálogo de Cursos
             {!isLoading && (
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-purple-300 font-mono font-semibold border border-purple-500/20">
-                {cursos.length}
+                {totalItems}
               </span>
             )}
           </h2>
@@ -108,7 +110,7 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
           <div className="pt-2">
             <button
               type="button"
-              onClick={loadCursos}
+              onClick={() => refetch()}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -142,15 +144,28 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {cursos.map((curso) => (
-            <CursoCard
-              key={curso.id}
-              curso={curso}
-              onViewEmentasClick={(id) => (onSelectCurso ? onSelectCurso(id) : navigate(`/cursos/${id}/disciplinas`))}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {cursos.map((curso) => (
+              <CursoCard
+                key={curso.id}
+                curso={curso}
+                onViewEmentasClick={(id) => (onSelectCurso ? onSelectCurso(id) : navigate(`/cursos/${id}/disciplinas`))}
+              />
+            ))}
+          </div>
+
+          {!isLoading && totalItems > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
             />
-          ))}
-        </div>
+          )}
+        </>
       )}
     </section>
   );

@@ -69,17 +69,17 @@ export const AdminDashboardPage: React.FC = () => {
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-2">
               <span className="px-3 py-1 rounded-full bg-purple-500/20 text-purple-300 text-xs font-mono font-bold border border-purple-500/40 flex items-center gap-1.5">
-                Administrador Institucional
+                {username}
               </span>
               <span className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-300 text-xs font-mono border border-emerald-500/20">
-                Sincronizado • /api/dashboard/
+                /api/dashboard/
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white tracking-tight">
-              Painel de Controle Institucional
+              Painel de Controle
             </h1>
             <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl leading-relaxed">
-              Bem-vindo, <strong className="text-purple-300">{username}</strong>. Acompanhe a saúde de sincronização com o SIGAA/UFAC, gerencie catálogos e monitore atualizações de ementas.
+              Bem-vindo, gerencie catálogos e monitore atualizações de ementas.
             </p>
           </div>
 

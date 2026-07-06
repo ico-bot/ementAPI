@@ -5,6 +5,8 @@
 
 import { apiClient } from '../../../shared/services/apiClient';
 import { fetchVinculosDocenteDisciplina } from '../../docentes/services/docentesService';
+import { fetchCursos } from '../../cursos/services/cursosService';
+import type { Curso } from '../../cursos/services/types';
 import type {
   Curriculo,
   Disciplina,
@@ -46,6 +48,16 @@ export interface CurriculoDisciplinaBackendDto {
   codigo_disciplina?: string;
   nome_disciplina?: string;
   carga_horaria?: number;
+  creditos?: number;
+  nota_minima_aprovacao?: string | number;
+  nome_unidade?: string;
+  ementa?: string;
+  programa?: string;
+  objetivos?: string;
+  metodologia?: string;
+  avaliacao?: string;
+  bibliografia_basica?: string;
+  bibliografia_complementar?: string;
   editado_manualmente?: boolean;
   inserido_manualmente?: boolean;
 }
@@ -87,15 +99,38 @@ export async function fetchPPCByCurriculoId(curriculoId: string): Promise<Projet
 /**
  * Converte DTO de Disciplina do Back-End para item de catálogo global do Front-End.
  */
-export function mapDisciplinaDtoToGlobalItem(dto: DisciplinaBackendDto): DisciplinaGlobalItem {
+export function mapDisciplinaDtoToGlobalItem(
+  dto: DisciplinaBackendDto,
+  cursoMap?: Map<string, Curso>
+): DisciplinaGlobalItem {
+  let cursoId: string | undefined = undefined;
+  let cursoNome: string | undefined = undefined;
+  let area = 'Ciências Exatas e da Terra';
+  let nivel: any = 'Graduação';
+  let status: any = 'Em atividade';
+
+  if (dto.cursos_vinculados && dto.cursos_vinculados.length > 0 && cursoMap) {
+    const primeiroCursoId = String(dto.cursos_vinculados[0]);
+    const curso = cursoMap.get(primeiroCursoId);
+    if (curso) {
+      cursoId = curso.id;
+      cursoNome = curso.nome;
+      area = curso.areaConhecimento || area;
+      nivel = curso.nivel || nivel;
+      status = curso.funcionamento || status;
+    }
+  }
+
   return {
     id: String(dto.id_disciplina),
     codigo: dto.codigo_disciplina || 'SEM-COD',
     nome: dto.nome_disciplina || 'Disciplina Não Identificada',
-    area: 'Ciências Exatas e da Terra',
-    nivel: 'Graduação',
+    area,
+    cursoId,
+    cursoNome,
+    nivel,
     turno: 'Integral',
-    status: 'Em atividade',
+    status,
     cargaHoraria: dto.carga_horaria || 60,
     creditos: dto.creditos || 4,
     notaMinimaAprovacao: Number(dto.nota_minima_aprovacao) || 5.0,
@@ -117,10 +152,11 @@ export function mapDisciplinaDtoToGlobalItem(dto: DisciplinaBackendDto): Discipl
  */
 export async function fetchCurriculoByCursoId(cursoId: string): Promise<Curriculo | null> {
   try {
-    const response = await apiClient<any>('/curriculos/', { params: { curso: cursoId, status: 'Corrente' } });
+    const response = await apiClient<any>('/curriculos/', { params: { curso: cursoId, page_size: 100 } });
     const dtos = Array.isArray(response) ? response : (response.results || []);
     if (dtos.length > 0) {
-      const c = dtos[0];
+      // Prioriza currículo com status 'Corrente'; se não houver, adota o primeiro disponível (ex: 'Ativa Anterior')
+      const c = dtos.find((item: any) => item.status === 'Corrente') || dtos[0];
       let curr: Curriculo = {
         id: String(c.id_curriculo),
         cursoId: String(c.curso),
@@ -177,22 +213,71 @@ export async function fetchDisciplinasByCursoId(
     const curriculo = await fetchCurriculoByCursoId(cursoId);
     let disciplinas: Disciplina[] = [];
     if (curriculo) {
-      const response = await apiClient<any>('/curriculo-disciplinas/', { params: { curriculo: curriculo.id } });
+      const response = await apiClient<any>('/curriculo-disciplinas/', { params: { curriculo: curriculo.id, page_size: 1000 } });
       const dtos: CurriculoDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
       
       if (dtos.length > 0) {
-        disciplinas = dtos.map((cd) => ({
-          id: String(cd.disciplina),
-          codigo: cd.codigo_disciplina || `COD-${cd.disciplina}`,
-          nome: cd.nome_disciplina || `Disciplina ${cd.disciplina}`,
-          cargaHoraria: cd.carga_horaria || 60,
-          creditos: Math.round((cd.carga_horaria || 60) / 15),
-          periodoIdeal: cd.periodo,
-          tipo: (cd.tipo_disciplina as any) || 'Obrigatória',
-          notaMinimaAprovacao: 5.0,
-          editadoManualmente: cd.editado_manualmente || false,
-          inseridoManualmente: cd.inserido_manualmente || false,
-        }));
+        disciplinas = dtos.map((cd) => {
+          const carga = cd.carga_horaria || 60;
+          const creds = cd.creditos || Math.round(carga / 15);
+          return {
+            id: String(cd.disciplina),
+            codigo: cd.codigo_disciplina || `COD-${cd.disciplina}`,
+            nome: cd.nome_disciplina || `Disciplina ${cd.disciplina}`,
+            cargaHoraria: carga,
+            creditos: creds,
+            periodoIdeal: cd.periodo,
+            tipo: (cd.tipo_disciplina as any) || 'Obrigatória',
+            notaMinimaAprovacao: Number(cd.nota_minima_aprovacao) || 5.0,
+            unidade: cd.nome_unidade || 'CCET',
+            ementa: cd.ementa || undefined,
+            objetivos: cd.objetivos || undefined,
+            programa: cd.programa || undefined,
+            metodologia: cd.metodologia || undefined,
+            avaliacao: cd.avaliacao || undefined,
+            bibliografiaBasica: cd.bibliografia_basica || undefined,
+            bibliografiaComplementar: cd.bibliografia_complementar || undefined,
+            editadoManualmente: cd.editado_manualmente || false,
+            inseridoManualmente: cd.inserido_manualmente || false,
+          };
+        });
+      }
+    }
+
+    // Fallback de resiliência: se a matriz curricular não retornou disciplinas (ou não existe matriz cadastrada),
+    // busca diretamente as disciplinas vinculadas ao curso via /disciplinas/?cursos_vinculados=${cursoId}
+    if (disciplinas.length === 0) {
+      try {
+        const responseDirect = await apiClient<any>('/disciplinas/', { params: { cursos_vinculados: cursoId, page_size: 1000 } });
+        const dtosDirect: DisciplinaBackendDto[] = Array.isArray(responseDirect) ? responseDirect : (responseDirect.results || []);
+        if (dtosDirect.length > 0) {
+          disciplinas = dtosDirect.map((dto) => {
+            const carga = dto.carga_horaria || 60;
+            const creds = dto.creditos || Math.round(carga / 15);
+            return {
+              id: String(dto.id_disciplina),
+              codigo: dto.codigo_disciplina || `COD-${dto.id_disciplina}`,
+              nome: dto.nome_disciplina || 'Disciplina Não Identificada',
+              cargaHoraria: carga,
+              creditos: creds,
+              periodoIdeal: 0, // Sem período fixo definido na grade
+              tipo: 'Obrigatória',
+              notaMinimaAprovacao: Number(dto.nota_minima_aprovacao) || 5.0,
+              unidade: dto.nome_unidade || 'UFAC',
+              ementa: dto.ementa || undefined,
+              objetivos: dto.objetivos || undefined,
+              programa: dto.programa || undefined,
+              metodologia: dto.metodologia || undefined,
+              avaliacao: dto.avaliacao || undefined,
+              bibliografiaBasica: dto.bibliografia_basica || undefined,
+              bibliografiaComplementar: dto.bibliografia_complementar || undefined,
+              editadoManualmente: dto.editado_manualmente || false,
+              inseridoManualmente: dto.inserido_manualmente || false,
+            };
+          });
+        }
+      } catch (fallbackErr) {
+        console.warn('Erro no fallback de busca direta de disciplinas por curso:', fallbackErr);
       }
     }
 
@@ -256,26 +341,69 @@ export async function fetchDisciplinasGlobal(
   filtros?: FiltrosDisciplinaGlobal
 ): Promise<PaginatedResponse<DisciplinaGlobalItem>> {
   try {
-    const params: Record<string, string | number | undefined> = {
-      page,
-      page_size: itemsPerPage,
-    };
+    let cursoMap = new Map<string, Curso>();
+    try {
+      const cursos = await fetchCursos();
+      cursos.forEach((c) => cursoMap.set(c.id, c));
+    } catch (err) {
+      console.warn('Não foi possível carregar os cursos para enriquecer disciplinas:', err);
+    }
+
+    const hasClientFilter =
+      (filtros?.area && filtros.area !== 'Todos') ||
+      (filtros?.nivel && filtros.nivel !== 'Todos') ||
+      (filtros?.status && filtros.status !== 'Todos');
+
+    const params: Record<string, string | number | undefined> = {};
     if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
     if (filtros?.cursoId && filtros.cursoId !== 'Todos') params.cursos_vinculados = filtros.cursoId;
 
-    const response = await apiClient<any>('/disciplinas/', { params });
-    const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-    const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-    const mapped = dtos.map(mapDisciplinaDtoToGlobalItem);
+    if (hasClientFilter) {
+      params.page_size = 1000;
+      const response = await apiClient<any>('/disciplinas/', { params });
+      const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+      
+      let mapped = dtos.map((dto) => mapDisciplinaDtoToGlobalItem(dto, cursoMap));
 
-    return {
-      items: mapped,
-      totalItems,
-      totalPages,
-      currentPage: page,
-      itemsPerPage,
-    };
+      if (filtros?.area && filtros.area !== 'Todos') {
+        mapped = mapped.filter((d) => d.area === filtros.area);
+      }
+      if (filtros?.nivel && filtros.nivel !== 'Todos') {
+        mapped = mapped.filter((d) => d.nivel === filtros.nivel);
+      }
+      if (filtros?.status && filtros.status !== 'Todos') {
+        mapped = mapped.filter((d) => d.status === filtros.status);
+      }
+
+      const totalItems = mapped.length;
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      const paginatedItems = mapped.slice((page - 1) * itemsPerPage, page * itemsPerPage);
+
+      return {
+        items: paginatedItems,
+        totalItems,
+        totalPages,
+        currentPage: page,
+        itemsPerPage,
+      };
+    } else {
+      params.page = page;
+      params.page_size = itemsPerPage;
+
+      const response = await apiClient<any>('/disciplinas/', { params });
+      const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+      const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
+      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      const mapped = dtos.map((dto) => mapDisciplinaDtoToGlobalItem(dto, cursoMap));
+
+      return {
+        items: mapped,
+        totalItems,
+        totalPages,
+        currentPage: page,
+        itemsPerPage,
+      };
+    }
   } catch (error) {
     console.error('Erro ao buscar catálogo global de disciplinas na API:', error);
     throw error;

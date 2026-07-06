@@ -36,7 +36,10 @@ class Docente(models.Model):
         ASSISTENTE = 'Professor Assistente', 'Professor Assistente'
         TITULAR = 'Professor Titular', 'Professor Titular'
         SUBSTITUTO = 'Professor Substituto', 'Professor Substituto'
+        SUBSTITUTO_MS = 'Professor Substituto do Magistério Superior', 'Professor Substituto do Magistério Superior'
         MAGISTERIO_SUPERIOR = 'Professor do Magistério Superior', 'Professor do Magistério Superior'
+        EBTT = 'Professor do Magistério do EBTT', 'Professor do Magistério do EBTT'
+        CONVENIO = 'PROFESSOR 3 GRAU - CONVÊNIO', 'PROFESSOR 3 GRAU - CONVÊNIO'
 
     id_docente = models.AutoField(primary_key=True)
     nome_docente = models.CharField(max_length=255)

@@ -1,6 +1,6 @@
 /**
  * @file DisciplinaCard.tsx
- * @description Card interativo de resumo de uma Disciplina com badges coloridas e indicação de docentes.
+ * @description Card interativo de resumo de uma Disciplina com tipografia limpa e prévia da ementa curricular.
  */
 
 import React from 'react';
@@ -47,17 +47,21 @@ export const DisciplinaCard: React.FC<DisciplinaCardProps> = ({ disciplina, onCl
         </h3>
 
         {disciplina.unidade && (
-          <p className="text-xs text-slate-400 mt-1.5 line-clamp-1 italic">
-            • {disciplina.unidade}
+          <p className="text-xs text-slate-400 mt-1 line-clamp-1 italic">
+            {disciplina.unidade}
+          </p>
+        )}
+
+        {disciplina.ementa && (
+          <p className="text-xs text-slate-300/80 mt-2.5 line-clamp-2 leading-relaxed font-normal border-t border-white/5 pt-2">
+            {disciplina.ementa}
           </p>
         )}
 
         {(disciplina.editadoManualmente || disciplina.inseridoManualmente) && (
-          <div className="mt-2.5 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 w-fit shadow-sm" title="Dado protegido contra sobrescrita pelo crawler automático">
-            <svg className="w-3.5 h-3.5 text-amber-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-            <span>{disciplina.inseridoManualmente ? 'Inserida manualmente (protegida)' : 'Editada manualmente (protegida)'}</span>
+          <div className="mt-3 flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 w-fit shadow-sm" title="Dado protegido contra sobrescrita pelo crawler automático">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            <span>{disciplina.inseridoManualmente ? 'Inserida manualmente' : 'Editada manualmente'}</span>
           </div>
         )}
       </div>
@@ -76,7 +80,7 @@ export const DisciplinaCard: React.FC<DisciplinaCardProps> = ({ disciplina, onCl
           <span className="truncate">
             {temDocente
               ? disciplina.docentes!.map((d) => d.nome).join(', ')
-              : 'Docente não informado no ementário'}
+              : 'Docente não informado'}
           </span>
         </div>
       </div>

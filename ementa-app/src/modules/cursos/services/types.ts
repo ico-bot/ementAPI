@@ -45,3 +45,6 @@ export interface FiltrosCurso {
   nivel?: NivelCurso | 'Todos';
   turno?: TurnoCurso | 'Todos';
 }
+
+export type { PaginatedResponse } from '../../../shared/types';
+

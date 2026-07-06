@@ -27,11 +27,14 @@ const TITULACOES_OPCOES: Array<TitulacaoDocente | 'Todos'> = [
 
 const CARGOS_OPCOES: Array<CargoDocente | 'Todos'> = [
   'Todos',
+  'Professor do Magistério Superior',
+  'Professor Substituto do Magistério Superior',
+  'Professor do Magistério do EBTT',
   'Professor Titular',
   'Professor Adjunto',
   'Professor Assistente',
   'Professor Substituto',
-  'Professor do Magistério Superior',
+  'PROFESSOR 3 GRAU - CONVÊNIO',
 ];
 
 export const DocentesFilterBar: React.FC<DocentesFilterBarProps> = ({

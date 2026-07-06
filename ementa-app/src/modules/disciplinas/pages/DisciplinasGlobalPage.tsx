@@ -10,27 +10,19 @@ import { NewDisciplinaModal } from '../components/modals/NewDisciplinaModal';
 import { DisciplinasTable } from '../components/list/DisciplinasTable';
 import { EditDisciplinaModal } from '../components/modals/EditDisciplinaModal';
 import { Pagination } from '../../../shared/components/ui/Pagination';
+import { useCursos } from '../../../shared/hooks/queries/useCursosQuery';
+import { useDisciplinasGlobalPaginated } from '../../../shared/hooks/queries/useDisciplinasQuery';
 import {
-  deleteDisciplinaGlobal,
-  fetchDisciplinasGlobal,
-  updateDisciplinaGlobal,
-  createDisciplina,
-} from '../services/disciplinasService';
-import { fetchCursos } from '../../cursos/services/cursosService';
-import type { Curso } from '../../cursos/services/types';
+  useCreateDisciplinaMutation,
+  useUpdateDisciplinaGlobalMutation,
+  useDeleteDisciplinaGlobalMutation,
+} from '../../../shared/hooks/queries/useDisciplinasMutations';
 import type { DisciplinaGlobalItem, NivelDisciplina, StatusDisciplina, Disciplina } from '../services/types';
 
 export const DisciplinasGlobalPage: React.FC = () => {
-  const [disciplinas, setDisciplinas] = useState<DisciplinaGlobalItem[]>([]);
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-
   // Pagination states
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [itemsPerPage, setItemsPerPage] = useState<number>(10);
-  const [totalItems, setTotalItems] = useState<number>(0);
-  const [totalPages, setTotalPages] = useState<number>(1);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -47,45 +39,32 @@ export const DisciplinasGlobalPage: React.FC = () => {
   // Cadastro modal state
   const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
 
-  useEffect(() => {
-    fetchCursos().then(setCursos).catch(console.error);
-  }, []);
-
-  const loadCatalog = async (pageToLoad = currentPage, limit = itemsPerPage): Promise<void> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await fetchDisciplinasGlobal(pageToLoad, limit, {
-        termo: searchTerm,
-        area: selectedArea,
-        nivel: selectedLevel,
-        status: selectedStatus,
-        cursoId: selectedCursoId,
-      });
-
-      setDisciplinas(response.items);
-      setTotalItems(response.totalItems);
-      setTotalPages(response.totalPages);
-      setCurrentPage(response.currentPage);
-    } catch (err: any) {
-      console.error('Erro ao buscar catálogo global:', err);
-      setError('Não foi possível carregar o catálogo geral de disciplinas. Verifique se o Back-End está em execução e tente novamente.');
-    } finally {
-      setIsLoading(false);
+  const { data, isLoading: isCatalogLoading, error: catalogError, refetch } = useDisciplinasGlobalPaginated(
+    currentPage,
+    itemsPerPage,
+    {
+      termo: searchTerm,
+      area: selectedArea,
+      nivel: selectedLevel,
+      status: selectedStatus,
+      cursoId: selectedCursoId,
     }
-  };
+  );
+  const { data: cursosData } = useCursos();
+  const createDisciplinaMutation = useCreateDisciplinaMutation();
+  const updateDisciplinaMutation = useUpdateDisciplinaGlobalMutation();
+  const deleteDisciplinaMutation = useDeleteDisciplinaGlobalMutation();
+
+  const disciplinas = data?.items || [];
+  const totalItems = data?.totalItems || 0;
+  const totalPages = data?.totalPages || 1;
+  const cursos = cursosData || [];
+  const isLoading = isCatalogLoading;
+  const error = catalogError ? 'Não foi possível carregar o catálogo geral de disciplinas. Verifique se o Back-End está em execução e tente novamente.' : null;
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      loadCatalog(1, itemsPerPage); // Reinicia na página 1 ao alterar busca ou filtro
-    }, 300);
-
-    return () => clearTimeout(timer);
+    setCurrentPage(1);
   }, [searchTerm, selectedArea, selectedLevel, selectedStatus, selectedCursoId]);
-
-  useEffect(() => {
-    loadCatalog(currentPage, itemsPerPage);
-  }, [currentPage, itemsPerPage]);
 
   const handlePageChange = (newPage: number): void => {
     setCurrentPage(newPage);
@@ -97,8 +76,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
   };
 
   const handleSaveEdit = async (updatedItem: DisciplinaGlobalItem): Promise<void> => {
-    await updateDisciplinaGlobal(updatedItem);
-    await loadCatalog(currentPage, itemsPerPage);
+    await updateDisciplinaMutation.mutateAsync(updatedItem);
     if (detailsModalDisciplina?.id === updatedItem.id) {
       setDetailsModalDisciplina(updatedItem);
     }
@@ -106,20 +84,21 @@ export const DisciplinasGlobalPage: React.FC = () => {
 
   const handleSaveNewDisciplina = async (newDisc: Omit<Disciplina, 'id'>, cursoId: string): Promise<void> => {
     try {
-      await createDisciplina(cursoId, newDisc);
-      await loadCatalog(1, itemsPerPage); // Recarrega o catálogo indo para a página 1
+      await createDisciplinaMutation.mutateAsync({ cursoId, disciplina: newDisc });
+      setCurrentPage(1);
     } catch (error) {
       console.error('Erro ao criar disciplina no catálogo global:', error);
     }
   };
 
   const handleConfirmDelete = async (itemToDelete: DisciplinaGlobalItem): Promise<void> => {
-    await deleteDisciplinaGlobal(itemToDelete.id);
-    // Se a última disciplina da página for excluída e houver mais páginas, volta uma página
+    await deleteDisciplinaMutation.mutateAsync(itemToDelete.id);
     const newTotalItems = totalItems - 1;
     const maxPage = Math.ceil(newTotalItems / itemsPerPage) || 1;
     const nextPage = Math.min(currentPage, maxPage);
-    await loadCatalog(nextPage, itemsPerPage);
+    if (nextPage !== currentPage) {
+      setCurrentPage(nextPage);
+    }
   };
 
   const handleResetFilters = (): void => {
@@ -250,7 +229,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
           </div>
         </div>
 
-        {(searchTerm !== '' || selectedArea !== 'Todos' || selectedLevel !== 'Todos' || selectedStatus !== 'Todos') && (
+        {(searchTerm !== '' || selectedCursoId !== 'Todos' || selectedArea !== 'Todos' || selectedLevel !== 'Todos' || selectedStatus !== 'Todos') && (
           <div className="flex justify-end pt-2 border-t border-slate-800/80">
             <button
               type="button"
@@ -280,7 +259,7 @@ export const DisciplinasGlobalPage: React.FC = () => {
           <div className="pt-2">
             <button
               type="button"
-              onClick={() => loadCatalog(currentPage, itemsPerPage)}
+              onClick={() => refetch()}
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">

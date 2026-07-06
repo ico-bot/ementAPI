@@ -137,11 +137,15 @@ AUTH_USER_MODEL = 'base_ementario.Usuario'
 # Configurações Globais do Django REST Framework
 REST_FRAMEWORK = {
     # 1. Paginação
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'base_ementario.pagination.StandardResultsSetPagination',
     'PAGE_SIZE': 20, 
     
     # 2. Filtros
-    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
     
     # 3. Autenticação
     'DEFAULT_AUTHENTICATION_CLASSES': (

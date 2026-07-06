@@ -3,7 +3,7 @@ from rest_framework import viewsets, filters
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import BasePermission, SAFE_METHODS, IsAdminUser
-from django_filters.rest_framework import DjangoFilterBackend
+from django_filters import rest_framework as filters
 from rest_framework_api_key.permissions import HasAPIKey
 
 from .models import (
@@ -100,12 +100,21 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     filterset_fields = ['cpf_usuario', 'email']
     search_fields = ['username', 'first_name']
 
+class DocenteFilter(filters.FilterSet):
+    titulacao_docente = filters.CharFilter(field_name='titulacao_docente', lookup_expr='icontains')
+    cargo_docente = filters.CharFilter(field_name='cargo_docente', lookup_expr='icontains')
+    centro_lotacao = filters.CharFilter(field_name='centro_lotacao', lookup_expr='icontains')
+
+    class Meta:
+        model = Docente
+        fields = ['titulacao_docente', 'cargo_docente', 'centro_lotacao', 'unidade_vinculo', 'cursos_vinculados']
+
 class DocenteViewSet(viewsets.ModelViewSet):
     queryset = Docente.objects.all().order_by('id_docente')
     serializer_class = DocenteSerializer
     permission_classes = [IsAdminOrHasAPIKey]
-    filterset_fields = ['titulacao_docente', 'cargo_docente', 'centro_lotacao', 'unidade_vinculo', 'cursos_vinculados']
-    search_fields = ['nome_docente', 'email_docente']
+    filterset_class = DocenteFilter
+    search_fields = ['nome_docente', 'centro_lotacao']
 
 class UnidadeViewSet(viewsets.ModelViewSet):
     queryset = Unidade.objects.all().order_by('id_unidade')

@@ -15,7 +15,10 @@ export type CargoDocente =
   | 'Professor Assistente'
   | 'Professor Titular'
   | 'Professor Substituto'
-  | 'Professor do Magistério Superior';
+  | 'Professor Substituto do Magistério Superior'
+  | 'Professor do Magistério Superior'
+  | 'Professor do Magistério do EBTT'
+  | 'PROFESSOR 3 GRAU - CONVÊNIO';
 
 export interface Docente {
   id: string;
@@ -54,3 +57,5 @@ export interface FiltrosDocente {
   titulacao?: TitulacaoDocente | 'Todos';
   cargo?: CargoDocente | 'Todos';
 }
+
+export type { PaginatedResponse } from '../../../shared/types';
