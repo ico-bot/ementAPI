@@ -24,3 +24,4 @@ class BaseConfig(AppConfig):
 
     def ready(self):
         post_migrate.connect(create_default_admin, sender=self)
+        

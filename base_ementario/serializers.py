@@ -33,11 +33,16 @@ class UnidadeSerializer(serializers.ModelSerializer):
 class CursoSerializer(serializers.ModelSerializer):
     # Trazendo o nome do coordenador em vez de apenas o ID para facilitar a leitura
     nome_coordenador = serializers.CharField(source='coordenador.nome_docente', read_only=True)
+    carga_horaria = serializers.SerializerMethodField()
 
     class Meta:
         model = Curso
         fields = "__all__"
         read_only_fields = ['id_curso']
+
+    def get_carga_horaria(self, obj):
+        curriculo = obj.curriculos.filter(status='Corrente').first() or obj.curriculos.first()
+        return curriculo.carga_horaria_total if curriculo else 0
 
     def to_representation(self, instance):
         data = super().to_representation(instance)
@@ -76,7 +81,7 @@ class CurriculoSerializer(serializers.ModelSerializer):
     class Meta:
         model = Curriculo
         fields = "__all__"
-
+    
 class DisciplinaSerializer(serializers.ModelSerializer):
     class Meta:
         model = Disciplina

@@ -39,6 +39,14 @@ class IsAdminOrHasAPIKey(BasePermission):
             return is_admin or has_api_key
         return bool(request.user and request.user.is_staff)
 
+class IsAdminOrReadOnly(BasePermission):
+    def has_permission(self, request, view):
+        if request.method in SAFE_METHODS:
+            return True
+        is_admin = bool(request.user and request.user.is_staff)
+        has_api_key = HasAPIKey().has_permission(request, view)
+        return is_admin or has_api_key
+
 def base(request):
     return render(request, 'base.html')
 
@@ -117,7 +125,7 @@ class UnidadeViewSet(viewsets.ModelViewSet):
 class CursoViewSet(viewsets.ModelViewSet):
     queryset = Curso.objects.consolidados().order_by('id_curso')
     serializer_class = CursoSerializer
-    permission_classes = [IsAdminOrHasAPIKey]
+    permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['nivel_curso', 'turno_curso', 'modalidade_curso', 'funcionamento_curso']
     search_fields = ['nome_curso', 'codigo_curso', 'area_conhecimento_curso']
     ordering_fields = ['nome_curso', 'created_at']
@@ -125,13 +133,13 @@ class CursoViewSet(viewsets.ModelViewSet):
 class CurriculoViewSet(viewsets.ModelViewSet):
     queryset = Curriculo.objects.all().order_by('id_curriculo')
     serializer_class = CurriculoSerializer
-    permission_classes = [IsAdminOrHasAPIKey]
+    permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['curso', 'status', 'regime_letivo']
 
 class DisciplinaViewSet(viewsets.ModelViewSet):
     queryset = Disciplina.objects.all().order_by('id_disciplina')
     serializer_class = DisciplinaSerializer
-    permission_classes = [IsAdminOrHasAPIKey]
+    permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['unidade', 'creditos', 'cursos_vinculados']
     search_fields = ['nome_disciplina', 'codigo_disciplina', 'ementa']
     ordering_fields = ['nome_disciplina', 'codigo_disciplina']
@@ -139,7 +147,7 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
 class CurriculoDisciplinaViewSet(viewsets.ModelViewSet):
     queryset = CurriculoDisciplina.objects.all().order_by('id_curriculo_disciplina')
     serializer_class = CurriculoDisciplinaSerializer
-    permission_classes = [IsAdminOrHasAPIKey]
+    permission_classes = [IsAdminOrReadOnly]
     filterset_fields = ['curriculo', 'disciplina', 'periodo', 'tipo_disciplina']
 
 class DocenteDisciplinaViewSet(viewsets.ModelViewSet):
