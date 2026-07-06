@@ -79,7 +79,7 @@ function App() {
                   }`
                 }
               >
-                ⚙️ Painel Admin
+                Painel Admin
               </NavLink>
             )}
           </div>
@@ -96,7 +96,7 @@ function App() {
                 {/* Profile Badge */}
                 <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-900/40 border border-slate-800 text-xs text-slate-300 font-medium">
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="font-mono text-purple-300">👑 {username} (Admin)</span>
+                  <span className="font-mono text-purple-300"> {username} </span>
                 </div>
                 <button
                   type="button"

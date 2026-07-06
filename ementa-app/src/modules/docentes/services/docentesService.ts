@@ -5,10 +5,7 @@
 
 import { apiClient } from '../../../shared/services/apiClient';
 import { fetchCursos } from '../../cursos/services/cursosService';
-import { DOCENTE_DISCIPLINAS_MOCK, DOCENTES_MOCK } from './docentesMock';
 import type { CargoDocente, Docente, DocenteDisciplinaVinculo, FiltrosDocente, TitulacaoDocente } from './types';
-
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface DocenteBackendDto {
   id_docente: number;
@@ -36,7 +33,7 @@ export interface DocenteDisciplinaBackendDto {
   carga_horaria?: number;
   curso: number;
   nome_curso?: string;
-  ano: number;
+  ano?: number | null;
   semestre: number;
   editado_manualmente?: boolean;
   inserido_manualmente?: boolean;
@@ -77,15 +74,12 @@ export function mapVinculoDtoToFrontend(dto: DocenteDisciplinaBackendDto): Docen
     cargaHoraria: dto.carga_horaria || 60,
     cursoId: String(dto.curso),
     cursoNome: dto.nome_curso || `Curso #${dto.curso}`,
-    ano: dto.ano || 2026,
+    ano: dto.ano !== null && dto.ano !== undefined ? dto.ano : undefined,
     semestre: dto.semestre || 1,
     editadoManualmente: dto.editado_manualmente || false,
     inseridoManualmente: dto.inserido_manualmente || false,
   };
 }
-
-let docentesLocalStore = [...DOCENTES_MOCK];
-let vinculosLocalStore = [...DOCENTE_DISCIPLINAS_MOCK];
 
 /**
  * Enriquecedor que cruza vínculos de docentes com o catálogo de cursos para garantir nomes legíveis e carga horária.
@@ -118,35 +112,13 @@ export async function fetchDocentes(filtros?: FiltrosDocente): Promise<Docente[]
     if (filtros?.titulacao && filtros.titulacao !== 'Todos') params.titulacao_docente = filtros.titulacao;
     if (filtros?.cargo && filtros.cargo !== 'Todos') params.cargo_docente = filtros.cargo;
 
-    const response = await apiClient<any>('/docentes', { params });
-    if (response) {
-      const dtos: DocenteBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      if (dtos.length > 0) {
-        const mapped = dtos.map(mapDocenteDtoToFrontend);
-        return mapped;
-      }
-    }
+    const response = await apiClient<any>('/docentes/', { params });
+    const dtos: DocenteBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    return dtos.map(mapDocenteDtoToFrontend);
   } catch (error) {
-    console.warn('API /docentes indisponível. Utilizando fallback local:', error);
+    console.error('Erro ao buscar docentes na API:', error);
+    throw error;
   }
-
-  await delay(250);
-  let lista = [...docentesLocalStore];
-
-  if (filtros) {
-    if (filtros.termo && filtros.termo.trim() !== '') {
-      const q = filtros.termo.toLowerCase();
-      lista = lista.filter((d) => d.nome.toLowerCase().includes(q) || (d.centroLotacao && d.centroLotacao.toLowerCase().includes(q)));
-    }
-    if (filtros.titulacao && filtros.titulacao !== 'Todos') {
-      lista = lista.filter((d) => d.titulacao === filtros.titulacao);
-    }
-    if (filtros.cargo && filtros.cargo !== 'Todos') {
-      lista = lista.filter((d) => d.cargo === filtros.cargo);
-    }
-  }
-
-  return lista;
 }
 
 /**
@@ -154,16 +126,15 @@ export async function fetchDocentes(filtros?: FiltrosDocente): Promise<Docente[]
  */
 export async function fetchDocenteById(id: string): Promise<Docente | null> {
   try {
-    const response = await apiClient<DocenteBackendDto>(`/docentes/${id}`);
-    if (response) {
+    const response = await apiClient<DocenteBackendDto>(`/docentes/${id}/`);
+    if (response && response.id_docente) {
       return mapDocenteDtoToFrontend(response);
     }
+    return null;
   } catch (error) {
-    console.warn(`API /docentes/${id} indisponível. Utilizando fallback local:`, error);
+    console.error(`Erro ao buscar docente ${id} na API:`, error);
+    throw error;
   }
-
-  await delay(200);
-  return docentesLocalStore.find((d) => d.id === id) || null;
 }
 
 /**
@@ -171,19 +142,14 @@ export async function fetchDocenteById(id: string): Promise<Docente | null> {
  */
 export async function fetchDisciplinasByDocenteId(docenteId: string): Promise<DocenteDisciplinaVinculo[]> {
   try {
-    const response = await apiClient<any>('/docente-disciplinas', { params: { docente: docenteId } });
-    if (response) {
-      const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      const mapped = dtos.map(mapVinculoDtoToFrontend);
-      return await enrichVinculosWithCourses(mapped);
-    }
+    const response = await apiClient<any>('/docente-disciplinas/', { params: { docente: docenteId } });
+    const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const mapped = dtos.map(mapVinculoDtoToFrontend);
+    return await enrichVinculosWithCourses(mapped);
   } catch (error) {
-    console.warn(`API /docente-disciplinas para docente ${docenteId} indisponível. Utilizando fallback local:`, error);
+    console.error(`Erro ao buscar disciplinas para o docente ${docenteId} na API:`, error);
+    throw error;
   }
-
-  await delay(200);
-  const localFiltered = vinculosLocalStore.filter((v) => v.docenteId === docenteId);
-  return await enrichVinculosWithCourses(localFiltered);
 }
 
 /**
@@ -196,26 +162,12 @@ export async function fetchVinculosDocenteDisciplina(params?: { cursoId?: string
     if (params?.disciplinaId) apiParams.disciplina = params.disciplinaId;
     if (params?.docenteId) apiParams.docente = params.docenteId;
 
-    const response = await apiClient<any>('/docente-disciplinas', { params: apiParams });
-    if (response) {
-      const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      const mapped = dtos.map(mapVinculoDtoToFrontend);
-      return await enrichVinculosWithCourses(mapped);
-    }
+    const response = await apiClient<any>('/docente-disciplinas/', { params: apiParams });
+    const dtos: DocenteDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const mapped = dtos.map(mapVinculoDtoToFrontend);
+    return await enrichVinculosWithCourses(mapped);
   } catch (error) {
-    console.warn('API /docente-disciplinas indisponível. Utilizando fallback local:', error);
+    console.error('Erro ao buscar vínculos docente-disciplina na API:', error);
+    throw error;
   }
-
-  await delay(150);
-  let lista = [...vinculosLocalStore];
-  if (params?.cursoId) {
-    lista = lista.filter((v) => v.cursoId === params.cursoId);
-  }
-  if (params?.disciplinaId) {
-    lista = lista.filter((v) => v.disciplinaId === params.disciplinaId);
-  }
-  if (params?.docenteId) {
-    lista = lista.filter((v) => v.docenteId === params.docenteId);
-  }
-  return await enrichVinculosWithCourses(lista);
 }

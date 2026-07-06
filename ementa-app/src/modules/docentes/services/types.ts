@@ -43,7 +43,7 @@ export interface DocenteDisciplinaVinculo {
   cargaHoraria?: number;
   cursoId: string;
   cursoNome?: string;
-  ano: number;
+  ano?: number | null;
   semestre: number;
   editadoManualmente?: boolean;
   inseridoManualmente?: boolean;

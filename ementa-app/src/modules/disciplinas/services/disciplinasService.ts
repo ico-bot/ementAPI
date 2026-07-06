@@ -4,26 +4,16 @@
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
-import { fetchCursoById } from '../../cursos/services/cursosService';
 import { fetchVinculosDocenteDisciplina } from '../../docentes/services/docentesService';
-import { disciplinasGlobalMock } from './disciplinasGlobalMock';
-import { CURRICULOS_MOCK, DISCIPLINAS_MOCK } from './disciplinasMock';
 import type {
   Curriculo,
   Disciplina,
   DisciplinaGlobalItem,
   FiltrosDisciplina,
   FiltrosDisciplinaGlobal,
-  NivelDisciplina,
   PaginatedResponse,
   ProjetoPedagogicoCurso,
-  TurnoDisciplina,
 } from './types';
-
-/**
- * Simula atraso de rede no fallback.
- */
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 export interface DisciplinaBackendDto {
   id_disciplina: number;
@@ -69,31 +59,12 @@ export interface PPCBackendDto {
   updated_at?: string;
 }
 
-const PPCS_MOCK: Record<string, ProjetoPedagogicoCurso> = {
-  '1': {
-    id: '1',
-    curriculoId: '1',
-    conteudo: 'Projeto Pedagógico do Curso de Bacharelado em Sistemas de Informação - UFAC. Diretrizes curriculares nacionais, formação em engenharia de software, gestão de TI e ciência de dados. Ênfase em inovação tecnológica e práticas extensionistas.',
-    arquivoUrl: 'https://www.ufac.br/portal/unidades-academicas/ccet/bsi/ppc_bsi_2023.pdf',
-    createdAt: '2023-02-15T10:00:00Z',
-    updatedAt: '2024-01-10T14:30:00Z',
-  },
-  '2': {
-    id: '2',
-    curriculoId: '2',
-    conteudo: 'Projeto Pedagógico do Curso de Engenharia de Software - UFAC. Estruturação baseada em métodos ágeis, arquitetura de sistemas escaláveis e qualidade de software profissional.',
-    arquivoUrl: 'https://www.ufac.br/portal/unidades-academicas/ccet/esoft/ppc_esoft_2024.pdf',
-    createdAt: '2024-01-20T09:00:00Z',
-    updatedAt: '2024-03-01T11:00:00Z',
-  },
-};
-
 /**
  * Busca o Projeto Pedagógico de Curso (PPC) associado a uma matriz curricular (currículo).
  */
 export async function fetchPPCByCurriculoId(curriculoId: string): Promise<ProjetoPedagogicoCurso | null> {
   try {
-    const response = await apiClient<any>('/ppcs');
+    const response = await apiClient<any>('/ppcs/');
     const dtos: PPCBackendDto[] = Array.isArray(response) ? response : (response.results || []);
     const foundDto = dtos.find((p) => String(p.curriculo) === String(curriculoId));
     if (foundDto) {
@@ -106,108 +77,12 @@ export async function fetchPPCByCurriculoId(curriculoId: string): Promise<Projet
         updatedAt: foundDto.updated_at,
       };
     }
+    return null;
   } catch (error) {
-    console.warn(`API de PPC indisponível ao buscar para o currículo ${curriculoId}. Utilizando mock local:`, error);
+    console.error(`Erro ao buscar PPC para o currículo ${curriculoId} na API:`, error);
+    throw error;
   }
-
-  await delay(150);
-  return PPCS_MOCK[curriculoId] || {
-    id: `mock-ppc-${curriculoId}`,
-    curriculoId,
-    conteudo: 'Projeto Pedagógico do Curso vigente. Documento oficial contendo diretrizes curriculares, perfil do egresso, estrutura curricular e ementário institucional aprovado pelos conselhos superiores da universidade.',
-    arquivoUrl: 'https://www.ufac.br/portal/graduacao/ppc_institucional_vigente.pdf',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
 }
-
-/**
- * Salva (cria ou atualiza) o Projeto Pedagógico de Curso no Back-End (/api/ppcs/).
- * Previne sobrescrita automática e preserva edições manuais no ementário.
- */
-export async function savePPC(
-  curriculoId: string,
-  data: { ppcId?: string; conteudo?: string; arquivoUrl?: string }
-): Promise<ProjetoPedagogicoCurso> {
-  const isUpdate = Boolean(data.ppcId && !data.ppcId.startsWith('mock-'));
-
-  try {
-    if (isUpdate) {
-      const response = await apiClient<PPCBackendDto>(`/ppcs/${data.ppcId}/`, {
-        method: 'PATCH',
-        body: JSON.stringify({
-          conteudo: data.conteudo,
-          arquivo_url: data.arquivoUrl,
-        }),
-      });
-      if (response && response.id_ppc) {
-        const saved: ProjetoPedagogicoCurso = {
-          id: String(response.id_ppc),
-          curriculoId: String(response.curriculo),
-          conteudo: response.conteudo || undefined,
-          arquivoUrl: response.arquivo_url || undefined,
-          createdAt: response.created_at,
-          updatedAt: response.updated_at || new Date().toISOString(),
-        };
-        PPCS_MOCK[curriculoId] = saved;
-        return saved;
-      }
-    } else {
-      const response = await apiClient<PPCBackendDto>('/ppcs/', {
-        method: 'POST',
-        body: JSON.stringify({
-          curriculo: Number(curriculoId) || 1,
-          conteudo: data.conteudo,
-          arquivo_url: data.arquivoUrl,
-        }),
-      });
-      if (response && response.id_ppc) {
-        const saved: ProjetoPedagogicoCurso = {
-          id: String(response.id_ppc),
-          curriculoId: String(response.curriculo),
-          conteudo: response.conteudo || undefined,
-          arquivoUrl: response.arquivo_url || undefined,
-          createdAt: response.created_at || new Date().toISOString(),
-          updatedAt: response.updated_at || new Date().toISOString(),
-        };
-        PPCS_MOCK[curriculoId] = saved;
-        return saved;
-      }
-    }
-  } catch (error) {
-    console.warn('Falha ao salvar PPC na API /api/ppcs/. Atualizando no mock local em memória:', error);
-  }
-
-  // Fallback local em memória para garantir continuidade de desenvolvimento e edições manuais
-  await delay(400);
-  const updatedMock: ProjetoPedagogicoCurso = {
-    id: data.ppcId || `mock-ppc-${curriculoId}-${Date.now()}`,
-    curriculoId,
-    conteudo: data.conteudo,
-    arquivoUrl: data.arquivoUrl,
-    createdAt: PPCS_MOCK[curriculoId]?.createdAt || new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  };
-  PPCS_MOCK[curriculoId] = updatedMock;
-  return updatedMock;
-}
-
-const getInitialCourseForMock = (item: DisciplinaGlobalItem): { cursoId: string; cursoNome: string } => {
-  if (item.codigo.startsWith('BSI')) return { cursoId: '1', cursoNome: 'Bacharelado em Sistemas de Informação' };
-  if (item.codigo.startsWith('MAT') || item.codigo.startsWith('ESOFT') || item.codigo.startsWith('ENG')) return { cursoId: '2', cursoNome: 'Engenharia de Software' };
-  if (item.codigo.startsWith('CCO') || item.codigo.startsWith('INF')) return { cursoId: '3', cursoNome: 'Ciência da Computação' };
-  if (item.codigo.startsWith('POS') || item.codigo.startsWith('ARC')) return { cursoId: '4', cursoNome: 'Especialização em Arquitetura de Software e Cloud' };
-  if (item.codigo.startsWith('MES') || item.codigo.startsWith('IA')) return { cursoId: '5', cursoNome: 'Mestrado em Inteligência Artificial' };
-  if (item.area === 'Ciências Jurídicas e Sociais') return { cursoId: '6', cursoNome: 'ABI - Computação e Informática' };
-  return { cursoId: '1', cursoNome: 'Bacharelado em Sistemas de Informação' };
-};
-
-// Cópia em memória mutável para simular CRUD no Front-End como fallback
-let globalCatalogState: DisciplinaGlobalItem[] = disciplinasGlobalMock.map((item) => ({
-  ...item,
-  ...getInitialCourseForMock(item),
-}));
-let courseDisciplinasState: Record<string, Disciplina[]> = { ...DISCIPLINAS_MOCK };
 
 /**
  * Converte DTO de Disciplina do Back-End para item de catálogo global do Front-End.
@@ -241,13 +116,12 @@ export function mapDisciplinaDtoToGlobalItem(dto: DisciplinaBackendDto): Discipl
  * Busca a matriz curricular (currículo vigente) de um curso pelo seu ID.
  */
 export async function fetchCurriculoByCursoId(cursoId: string): Promise<Curriculo | null> {
-  let curr: Curriculo | null = null;
   try {
-    const response = await apiClient<any>('/curriculos', { params: { curso: cursoId, status: 'Corrente' } });
+    const response = await apiClient<any>('/curriculos/', { params: { curso: cursoId, status: 'Corrente' } });
     const dtos = Array.isArray(response) ? response : (response.results || []);
     if (dtos.length > 0) {
       const c = dtos[0];
-      curr = {
+      let curr: Curriculo = {
         id: String(c.id_curriculo),
         cursoId: String(c.curso),
         cursoNome: c.nome_curso || 'Matriz Curricular',
@@ -260,41 +134,36 @@ export async function fetchCurriculoByCursoId(cursoId: string): Promise<Curricul
         cargaHorariaTotal: c.carga_horaria_total || 3200,
         status: c.status as any,
       };
-    }
-  } catch (error) {
-    console.warn(`API indisponível ao buscar currículo para o curso ${cursoId}. Utilizando mock local:`, error);
-  }
 
-  if (!curr) {
-    await delay(250);
-    curr = CURRICULOS_MOCK.find((c) => c.cursoId === cursoId) || null;
-  }
-
-  if (curr) {
-    try {
-      const vinculos = await fetchVinculosDocenteDisciplina({ cursoId });
-      const mapaDocentes = new Map<string, { id: string; nome: string }>();
-      vinculos.forEach((v) => {
-        if (v.docenteId && v.docenteNome) {
-          mapaDocentes.set(v.docenteId, { id: v.docenteId, nome: v.docenteNome });
+      try {
+        const vinculos = await fetchVinculosDocenteDisciplina({ cursoId });
+        const mapaDocentes = new Map<string, { id: string; nome: string }>();
+        vinculos.forEach((v) => {
+          if (v.docenteId && v.docenteNome) {
+            mapaDocentes.set(v.docenteId, { id: v.docenteId, nome: v.docenteNome });
+          }
+        });
+        if (mapaDocentes.size > 0) {
+          curr = { ...curr, corpoDocente: Array.from(mapaDocentes.values()) };
         }
-      });
-      if (mapaDocentes.size > 0) {
-        curr = { ...curr, corpoDocente: Array.from(mapaDocentes.values()) };
+      } catch (err) {
+        console.warn('Erro ao carregar corpo docente da matriz curricular:', err);
       }
-    } catch (err) {
-      console.warn('Erro ao carregar corpo docente da matriz curricular:', err);
-    }
 
-    try {
-      const ppcData = await fetchPPCByCurriculoId(curr.id);
-      curr = { ...curr, ppc: ppcData };
-    } catch (err) {
-      console.warn('Erro ao buscar PPC da matriz curricular:', err);
+      try {
+        const ppcData = await fetchPPCByCurriculoId(curr.id);
+        curr = { ...curr, ppc: ppcData };
+      } catch (err) {
+        console.warn('Erro ao buscar PPC da matriz curricular:', err);
+      }
+
+      return curr;
     }
+    return null;
+  } catch (error) {
+    console.error(`Erro ao buscar currículo para o curso ${cursoId} na API:`, error);
+    throw error;
   }
-
-  return curr;
 }
 
 /**
@@ -304,12 +173,11 @@ export async function fetchDisciplinasByCursoId(
   cursoId: string,
   filtros?: FiltrosDisciplina
 ): Promise<Disciplina[]> {
-  let disciplinas: Disciplina[] = [];
-  let curriculo: Curriculo | null = null;
   try {
-    curriculo = await fetchCurriculoByCursoId(cursoId);
+    const curriculo = await fetchCurriculoByCursoId(cursoId);
+    let disciplinas: Disciplina[] = [];
     if (curriculo) {
-      const response = await apiClient<any>('/curriculo-disciplinas', { params: { curriculo: curriculo.id } });
+      const response = await apiClient<any>('/curriculo-disciplinas/', { params: { curriculo: curriculo.id } });
       const dtos: CurriculoDisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
       
       if (dtos.length > 0) {
@@ -327,65 +195,56 @@ export async function fetchDisciplinasByCursoId(
         }));
       }
     }
-  } catch (error) {
-    console.warn(`API indisponível para disciplinas do curso ${cursoId}. Utilizando fallback local:`, error);
-  }
 
-  if (disciplinas.length === 0) {
-    await delay(250);
-    disciplinas = courseDisciplinasState[cursoId] || [];
-  }
-
-  // Garantir que curriculo foi carregado caso falhe no try
-  if (!curriculo) {
-    curriculo = await fetchCurriculoByCursoId(cursoId);
-  }
-
-  // Enriquecer cada disciplina com os docentes vinculados e o PPC da matriz
-  try {
-    const vinculos = await fetchVinculosDocenteDisciplina({ cursoId });
-    disciplinas = disciplinas.map((disc) => {
-      const docentesDestaMateria = vinculos
-        .filter((v) => v.disciplinaId === disc.id || (v.codigoDisciplina && v.codigoDisciplina === disc.codigo))
-        .map((v) => ({ id: v.docenteId, nome: v.docenteNome }));
-      
-      return {
+    // Enriquecer cada disciplina com os docentes vinculados e o PPC da matriz
+    try {
+      const vinculos = await fetchVinculosDocenteDisciplina({ cursoId });
+      disciplinas = disciplinas.map((disc) => {
+        const docentesDestaMateria = vinculos
+          .filter((v) => v.disciplinaId === disc.id || (v.codigoDisciplina && v.codigoDisciplina === disc.codigo))
+          .map((v) => ({ id: v.docenteId, nome: v.docenteNome }));
+        
+        return {
+          ...disc,
+          docentes: docentesDestaMateria.length > 0 ? docentesDestaMateria : disc.docentes,
+          ppc: curriculo?.ppc || disc.ppc || null,
+        };
+      });
+    } catch (err) {
+      console.warn('Erro ao mapear professores para disciplinas do curso:', err);
+      disciplinas = disciplinas.map((disc) => ({
         ...disc,
-        docentes: docentesDestaMateria.length > 0 ? docentesDestaMateria : disc.docentes,
         ppc: curriculo?.ppc || disc.ppc || null,
-      };
-    });
-  } catch (err) {
-    console.warn('Erro ao mapear professores para disciplinas do curso:', err);
-    disciplinas = disciplinas.map((disc) => ({
-      ...disc,
-      ppc: curriculo?.ppc || disc.ppc || null,
-    }));
-  }
+      }));
+    }
 
-  if (!filtros) {
+    if (!filtros) {
+      return disciplinas;
+    }
+
+    if (filtros.termo && filtros.termo.trim() !== '') {
+      const termoLower = filtros.termo.toLowerCase();
+      disciplinas = disciplinas.filter(
+        (disc) =>
+          disc.nome.toLowerCase().includes(termoLower) ||
+          disc.codigo.toLowerCase().includes(termoLower) ||
+          (disc.ementa && disc.ementa.toLowerCase().includes(termoLower))
+      );
+    }
+
+    if (filtros.periodo && filtros.periodo !== 'Todos') {
+      disciplinas = disciplinas.filter((disc) => disc.periodoIdeal === Number(filtros.periodo));
+    }
+
+    if (filtros.tipo && filtros.tipo !== 'Todos') {
+      disciplinas = disciplinas.filter((disc) => disc.tipo === filtros.tipo);
+    }
+
     return disciplinas;
+  } catch (error) {
+    console.error(`Erro ao buscar disciplinas do curso ${cursoId} na API:`, error);
+    throw error;
   }
-
-  if (filtros.termo && filtros.termo.trim() !== '') {
-    const termoLower = filtros.termo.toLowerCase();
-    disciplinas = disciplinas.filter(
-      (disc) =>
-        disc.nome.toLowerCase().includes(termoLower) ||
-        disc.codigo.toLowerCase().includes(termoLower) ||
-        (disc.ementa && disc.ementa.toLowerCase().includes(termoLower))
-    );
-  }
-
-  if (filtros.periodo && filtros.periodo !== 'Todos') {
-    disciplinas = disciplinas.filter((disc) => disc.periodoIdeal === Number(filtros.periodo));
-  }
-
-  if (filtros.tipo && filtros.tipo !== 'Todos') {
-    disciplinas = disciplinas.filter((disc) => disc.tipo === filtros.tipo);
-  }
-
-  return disciplinas;
 }
 
 /**
@@ -404,89 +263,40 @@ export async function fetchDisciplinasGlobal(
     if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
     if (filtros?.cursoId && filtros.cursoId !== 'Todos') params.cursos_vinculados = filtros.cursoId;
 
-    const response = await apiClient<any>('/disciplinas', { params });
-    if (response) {
-      const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
-      const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
-      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-      const mapped = dtos.map(mapDisciplinaDtoToGlobalItem);
+    const response = await apiClient<any>('/disciplinas/', { params });
+    const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
+    const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
+    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const mapped = dtos.map(mapDisciplinaDtoToGlobalItem);
 
-      return {
-        items: mapped,
-        totalItems,
-        totalPages,
-        currentPage: page,
-        itemsPerPage,
-      };
-    }
+    return {
+      items: mapped,
+      totalItems,
+      totalPages,
+      currentPage: page,
+      itemsPerPage,
+    };
   } catch (error) {
-    console.warn('API de Disciplinas indisponível. Utilizando catálogo em memória local:', error);
+    console.error('Erro ao buscar catálogo global de disciplinas na API:', error);
+    throw error;
   }
-
-  await delay(250);
-
-  let filtered = [...globalCatalogState];
-
-  if (filtros) {
-    if (filtros.termo && filtros.termo.trim() !== '') {
-      const query = filtros.termo.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.nome.toLowerCase().includes(query) ||
-          item.codigo.toLowerCase().includes(query) ||
-          item.area.toLowerCase().includes(query)
-      );
-    }
-
-    if (filtros.area && filtros.area !== 'Todos') {
-      filtered = filtered.filter((item) => item.area === filtros.area);
-    }
-
-    if (filtros.nivel && filtros.nivel !== 'Todos') {
-      filtered = filtered.filter((item) => item.nivel === filtros.nivel);
-    }
-
-    if (filtros.status && filtros.status !== 'Todos') {
-      filtered = filtered.filter((item) => item.status === filtros.status);
-    }
-
-    if (filtros.cursoId && filtros.cursoId !== 'Todos') {
-      filtered = filtered.filter((item) => item.cursoId === filtros.cursoId);
-    }
-  }
-
-  const totalItems = filtered.length;
-  const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
-  const validPage = Math.max(1, Math.min(page, totalPages));
-  const startIndex = (validPage - 1) * itemsPerPage;
-  const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
-
-  return {
-    items: paginatedItems,
-    totalItems,
-    totalPages,
-    currentPage: validPage,
-    itemsPerPage,
-  };
 }
 
 /**
- * Exclui uma disciplina global pelo ID via API ou localmente no fallback.
+ * Exclui uma disciplina global pelo ID via API.
  */
 export async function deleteDisciplinaGlobal(id: string): Promise<boolean> {
   try {
     await apiClient(`/disciplinas/${id}/`, { method: 'DELETE' });
+    return true;
   } catch (error) {
-    console.warn(`Erro na remoção via API (${id}). Apagando localmente no fallback:`, error);
+    console.error(`Erro ao excluir disciplina ${id} via API:`, error);
+    throw error;
   }
-
-  await delay(200);
-  globalCatalogState = globalCatalogState.filter((item) => item.id !== id);
-  return true;
 }
 
 /**
- * Atualiza os dados básicos de uma disciplina global via API ou localmente.
+ * Atualiza os dados básicos de uma disciplina global via API.
  */
 export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem): Promise<DisciplinaGlobalItem> {
   try {
@@ -510,22 +320,17 @@ export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem):
       body: JSON.stringify(payload),
     });
     if (response && response.id_disciplina) {
-      const mapped = mapDisciplinaDtoToGlobalItem(response);
-      globalCatalogState = globalCatalogState.map((item) => (item.id === mapped.id ? mapped : item));
-      return mapped;
+      return mapDisciplinaDtoToGlobalItem(response);
     }
+    throw new Error('Resposta inválida do servidor ao atualizar disciplina.');
   } catch (error) {
-    console.warn(`Erro ao atualizar disciplina via API (${updatedItem.id}). Atualizando localmente:`, error);
+    console.error(`Erro ao atualizar disciplina ${updatedItem.id} via API:`, error);
+    throw error;
   }
-
-  await delay(200);
-  const updatedWithFlag = { ...updatedItem, editadoManualmente: true };
-  globalCatalogState = globalCatalogState.map((item) => (item.id === updatedItem.id ? updatedWithFlag : item));
-  return updatedWithFlag;
 }
 
 /**
- * Cadastra uma nova disciplina na matriz curricular do curso específico.
+ * Cadastra uma nova disciplina na matriz curricular via API.
  */
 export async function createDisciplina(
   cursoId: string,
@@ -555,56 +360,15 @@ export async function createDisciplina(
     });
 
     if (response && response.id_disciplina) {
-      const created: Disciplina = {
+      return {
         ...newDisc,
         id: String(response.id_disciplina),
         inseridoManualmente: true,
       };
-      if (!courseDisciplinasState[cursoId]) {
-        courseDisciplinasState[cursoId] = [];
-      }
-      courseDisciplinasState[cursoId].push(created);
-      return created;
     }
+    throw new Error('Resposta inválida do servidor ao cadastrar disciplina.');
   } catch (error) {
-    console.warn(`Erro no cadastro via API para o curso ${cursoId}. Cadastrando no fallback local:`, error);
+    console.error(`Erro ao cadastrar disciplina via API para o curso ${cursoId}:`, error);
+    throw error;
   }
-
-  await delay(250);
-  const id = `disc-${Date.now()}`;
-  const created: Disciplina = {
-    ...newDisc,
-    id,
-    inseridoManualmente: true,
-  };
-
-  if (!courseDisciplinasState[cursoId]) {
-    courseDisciplinasState[cursoId] = [];
-  }
-  courseDisciplinasState[cursoId].push(created);
-
-  const curso = await fetchCursoById(cursoId);
-
-  const createdGlobal: DisciplinaGlobalItem = {
-    id,
-    codigo: created.codigo,
-    nome: created.nome,
-    area: curso?.areaConhecimento || 'Ciências Exactas e Tecnológicas',
-    nivel: (curso?.nivel as NivelDisciplina) || 'Graduação',
-    turno: (curso?.turno as TurnoDisciplina) || 'Integral',
-    status: 'Em atividade',
-    cargaHoraria: created.cargaHoraria || 60,
-    creditos: created.creditos,
-    notaMinimaAprovacao: created.notaMinimaAprovacao,
-    unidade: created.unidade || 'CCET',
-    ementa: created.ementa,
-    bibliografiaBasica: created.bibliografiaBasica,
-    preRequisitos: created.preRequisitos,
-    inseridoManualmente: true,
-    cursoId: curso?.id || cursoId,
-    cursoNome: curso?.nome || 'Curso Associado',
-  };
-  globalCatalogState.push(createdGlobal);
-
-  return created;
 }

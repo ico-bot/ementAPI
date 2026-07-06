@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 
 class Usuario(AbstractUser):
+    id = models.AutoField(primary_key=True, db_column='id_usuario')
     cpf_usuario = models.CharField(
         max_length=14, unique=True, null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -11,6 +12,10 @@ class Usuario(AbstractUser):
 
     class Meta:
         db_table = 'usuario'
+
+    @property
+    def id_usuario(self):
+        return self.id
 
     def __str__(self):
         return self.username
@@ -304,7 +309,7 @@ class DocenteDisciplina(models.Model):
         Disciplina, on_delete=models.CASCADE, related_name='vinculos_docentes')
     curso = models.ForeignKey(
         Curso, on_delete=models.CASCADE, related_name='docentes_disciplinas')
-    ano = models.IntegerField(default=2024)
+    ano = models.IntegerField(default=2024, null=True, blank=True)
     semestre = models.IntegerField(default=1)
     created_at = models.DateTimeField(auto_now_add=True)
 

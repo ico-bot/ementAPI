@@ -4,8 +4,6 @@
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
-import { simulateNetworkDelay } from '../../../shared/services/mockClient';
-import { CURSOS_MOCK } from './cursosMock';
 import type { Curso, FiltrosCurso, ModalidadeCurso, NivelCurso, StatusFuncionamento, TurnoCurso } from './types';
 
 export interface CursoBackendDto {
@@ -66,8 +64,6 @@ export function mapCursoDtoToFrontend(dto: CursoBackendDto): Curso {
   };
 }
 
-let cursosLocalStore = [...CURSOS_MOCK];
-
 export const fetchCursos = async (filtros?: FiltrosCurso): Promise<Curso[]> => {
   try {
     const params: Record<string, string | undefined> = {};
@@ -76,54 +72,24 @@ export const fetchCursos = async (filtros?: FiltrosCurso): Promise<Curso[]> => {
     if (filtros?.nivel && filtros.nivel !== 'Todos') params.nivel_curso = filtros.nivel;
     if (filtros?.turno && filtros.turno !== 'Todos') params.turno_curso = filtros.turno;
 
-    const response = await apiClient<CursoBackendDto[] | { results: CursoBackendDto[] }>('/cursos', { params });
+    const response = await apiClient<CursoBackendDto[] | { results: CursoBackendDto[] }>('/cursos/', { params });
     const dtos = Array.isArray(response) ? response : (response.results || []);
-    const mapped = dtos.map(mapCursoDtoToFrontend);
-    
-    // Se a API retornou cursos, atualizamos nosso cache local
-    if (mapped.length > 0) {
-      cursosLocalStore = mapped;
-    }
-    return mapped;
+    return dtos.map(mapCursoDtoToFrontend);
   } catch (error) {
-    console.warn('API de Cursos indisponível. Utilizando fallback em memória local:', error);
-    await simulateNetworkDelay(200);
-
-    return cursosLocalStore.filter((curso) => {
-      if (filtros?.termo) {
-        const normalizedQuery = filtros.termo.toLowerCase();
-        const matchesName = curso.nome.toLowerCase().includes(normalizedQuery);
-        const matchesCode = curso.codigo.toLowerCase().includes(normalizedQuery);
-        if (!matchesName && !matchesCode) return false;
-      }
-
-      if (filtros?.funcionamento && filtros.funcionamento !== 'Todos') {
-        if (curso.funcionamento !== filtros.funcionamento) return false;
-      }
-
-      if (filtros?.nivel && filtros.nivel !== 'Todos') {
-        if (curso.nivel !== filtros.nivel) return false;
-      }
-
-      if (filtros?.turno && filtros.turno !== 'Todos') {
-        if (curso.turno !== filtros.turno) return false;
-      }
-
-      return true;
-    });
+    console.error('Erro ao buscar cursos na API:', error);
+    throw error;
   }
 };
 
 export const fetchCursoById = async (id: string): Promise<Curso | undefined> => {
   try {
-    const response = await apiClient<CursoBackendDto>(`/cursos/${id}`);
+    const response = await apiClient<CursoBackendDto>(`/cursos/${id}/`);
     if (response && response.id_curso) {
       return mapCursoDtoToFrontend(response);
     }
+    return undefined;
   } catch (error) {
-    console.warn(`API indisponível ao buscar curso ${id}. Utilizando fallback em memória local:`, error);
+    console.error(`Erro ao buscar curso ${id} na API:`, error);
+    throw error;
   }
-
-  await simulateNetworkDelay(150);
-  return cursosLocalStore.find((curso) => curso.id === id);
 };

@@ -21,12 +21,12 @@ CREATE TABLE IF NOT EXISTS usuario (
 CREATE TABLE IF NOT EXISTS docente (
     id_docente INT AUTO_INCREMENT PRIMARY KEY,
     nome_docente VARCHAR(255) NOT NULL,
-    titulacao_docente ENUM('Graduação', 'Especialização', 'Mestrado', 'Doutorado', 'Pós-Doutorado'),
-    centro_lotacao VARCHAR(45),
-    cargo_docente ENUM('Professor Adjunto', 'Professor Assistente', 'Professor Titular', 'Professor Substituto'),
-    jornada_docente INT COMMENT 'Horas semanais',
-    tempo_casa_docente INT COMMENT 'Anos na instituição',
-    email_docente VARCHAR(255),
+    titulacao_docente VARCHAR(100) NULL,
+    centro_lotacao VARCHAR(255) NULL,
+    cargo_docente VARCHAR(100) NULL,
+    jornada_docente VARCHAR(100) NULL COMMENT 'Jornada de trabalho (ex: Dedicação Exclusiva, 40h, 20h)',
+    tempo_casa_docente INT NULL COMMENT 'Anos na instituição',
+    email_docente VARCHAR(255) NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_nome (nome_docente)
@@ -168,8 +168,8 @@ CREATE TABLE IF NOT EXISTS docente_disciplina (
     docente_id INT NOT NULL,
     disciplina_id INT NOT NULL,
     curso_id INT NOT NULL,
-    ano INT NOT NULL,
-    semestre INT NOT NULL COMMENT '1 ou 2',
+    ano INT NULL,
+    semestre INT NULL COMMENT '1 ou 2',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_docente (docente_id),
     INDEX idx_disciplina (disciplina_id),
@@ -219,3 +219,31 @@ CREATE TABLE IF NOT EXISTS documento_curso (
         ON DELETE CASCADE ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
 COMMENT='Documentos relacionados aos cursos';
+
+
+-- ============================================================
+-- TABELA: docente_cursos_vinculados
+-- ============================================================
+CREATE TABLE IF NOT EXISTS docente_cursos_vinculados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    docente_id INT NOT NULL,
+    curso_id INT NOT NULL,
+    UNIQUE KEY unique_docente_curso (docente_id, curso_id),
+    FOREIGN KEY (docente_id) REFERENCES docente(id_docente) ON DELETE CASCADE,
+    FOREIGN KEY (curso_id) REFERENCES curso(id_curso) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Relacionamento N:M entre docentes e cursos';
+
+
+-- ============================================================
+-- TABELA: disciplina_cursos_vinculados
+-- ============================================================
+CREATE TABLE IF NOT EXISTS disciplina_cursos_vinculados (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    disciplina_id INT NOT NULL,
+    curso_id INT NOT NULL,
+    UNIQUE KEY unique_disciplina_curso (disciplina_id, curso_id),
+    FOREIGN KEY (disciplina_id) REFERENCES disciplina(id_disciplina) ON DELETE CASCADE,
+    FOREIGN KEY (curso_id) REFERENCES curso(id_curso) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+COMMENT='Relacionamento N:M entre disciplinas e cursos';

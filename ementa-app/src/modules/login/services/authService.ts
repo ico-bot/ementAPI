@@ -1,6 +1,6 @@
 /**
  * @file authService.ts
- * @description Serviço responsável por gerenciar a autenticação integrada via JWT com o Back-End Django e fallback local em memória.
+ * @description Serviço responsável por gerenciar a autenticação integrada via JWT com o Back-End Django.
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
@@ -45,14 +45,14 @@ export const refreshAccessToken = async (): Promise<string | null> => {
       return response.access;
     }
   } catch (error) {
-    console.warn('Falha ao renovar token JWT via refresh:', error);
+    console.error('Falha ao renovar token JWT via refresh:', error);
     logout();
   }
   return null;
 };
 
 /**
- * Realiza o login via API Back-End (/login/) com fallback para autenticação local em memória.
+ * Realiza o login via API Back-End (/login/).
  */
 export const login = async (credentials: LoginCredentials): Promise<LoginResponse> => {
   const username = credentials.username || '';
@@ -76,25 +76,11 @@ export const login = async (credentials: LoginCredentials): Promise<LoginRespons
         refreshToken: response.refresh,
       };
     }
-  } catch (error) {
-    console.warn('API de Login (/login/) indisponível ou falha nas credenciais remotas. Avaliando fallback local:', error);
+    throw new Error('Resposta inválida do servidor ao autenticar.');
+  } catch (error: any) {
+    console.error('Erro ao realizar login no Back-End (/login/):', error);
+    throw error;
   }
-
-  // Fallback local em memória para manter simetria e funcionamento off-line durante desenvolvimento
-  await new Promise((resolve) => setTimeout(resolve, 500));
-
-  if (username.trim() === 'admin' && password === 'admin123') {
-    localStorage.setItem(IS_AUTH_KEY, 'true');
-    localStorage.setItem(USERNAME_KEY, username);
-    localStorage.setItem('userRole', 'ADMIN');
-
-    return {
-      success: true,
-      username,
-    };
-  }
-
-  throw new Error('Usuário ou senha incorretos.');
 };
 
 /**

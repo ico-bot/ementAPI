@@ -97,7 +97,7 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
     permission_classes = [IsAdminUser]
-    filterset_fields = ['cpf_usuario', 'email_usuario']
+    filterset_fields = ['cpf_usuario', 'email']
     search_fields = ['username', 'first_name']
 
 class DocenteViewSet(viewsets.ModelViewSet):

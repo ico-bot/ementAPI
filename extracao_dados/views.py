@@ -93,11 +93,11 @@ def dashboard_overview(_request):
     )
 
 class UsuarioViewSet(viewsets.ModelViewSet):
-    queryset = Usuario.objects.all().order_by('id_usuario')
+    queryset = Usuario.objects.all().order_by('id')
     serializer_class = UsuarioSerializer
     permission_classes = [IsAdminOrReadOnly]
-    filterset_fields = ['cpf_usuario', 'email_usuario']
-    search_fields = ['nome_usuario']
+    filterset_fields = ['cpf_usuario', 'email']
+    search_fields = ['username', 'first_name']
 
 class DocenteViewSet(viewsets.ModelViewSet):
     queryset = Docente.objects.all().order_by('id_docente')

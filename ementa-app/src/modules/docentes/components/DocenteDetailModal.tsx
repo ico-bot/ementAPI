@@ -68,11 +68,11 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
               )}
               {(docente.editadoManualmente || docente.inseridoManualmente) ? (
                 <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/30">
-                  ✏️ Personalizado
+                  Personalizado
                 </span>
               ) : (
                 <span className="text-xs font-mono font-medium px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
-                  ⚡ API /api/docentes/
+                  API /api/docentes/
                 </span>
               )}
             </div>
@@ -83,7 +83,7 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
 
             {docente.centroLotacao && (
               <p className="text-xs sm:text-sm text-slate-400 mt-1 italic">
-                📍 {docente.centroLotacao}
+                {docente.centroLotacao}
               </p>
             )}
           </div>
@@ -186,7 +186,7 @@ export const DocenteDetailModal: React.FC<DocenteDetailModalProps> = ({
                           ⏱️ {v.cargaHoraria || 60}h
                         </span>
                         <span className="text-xs font-mono text-slate-400">
-                          Período letivo: {v.ano}/{v.semestre}
+                          {v.ano ? `Período letivo: ${v.ano}/${v.semestre}` : `Período: Flexível (${v.semestre}º Sem.)`}
                         </span>
                       </div>
                       <h4 className="text-sm font-bold text-slate-100">{v.disciplinaNome}</h4>

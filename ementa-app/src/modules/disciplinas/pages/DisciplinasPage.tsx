@@ -40,6 +40,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
   const [curriculo, setCurriculo] = useState<Curriculo | null>(null);
   const [disciplinas, setDisciplinas] = useState<Disciplina[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   // Modal detail state
   const [selectedDisciplina, setSelectedDisciplina] = useState<Disciplina | null>(null);
@@ -55,6 +56,7 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
 
   const loadData = async (): Promise<void> => {
     setIsLoading(true);
+    setError(null);
     try {
       const [currData, discData] = await Promise.all([
         fetchCurriculoByCursoId(cursoId),
@@ -66,8 +68,9 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
       ]);
       setCurriculo(currData);
       setDisciplinas(discData);
-    } catch (error) {
-      console.error('Erro ao carregar dados do ementário:', error);
+    } catch (err: any) {
+      console.error('Erro ao carregar dados do ementário:', err);
+      setError('Não foi possível carregar a matriz curricular e as disciplinas. Verifique a conexão com o servidor.');
     } finally {
       setIsLoading(false);
     }
@@ -103,7 +106,33 @@ export const DisciplinasPage: React.FC<DisciplinasPageProps> = ({
 
   return (
     <section className="space-y-8 animate-fade-in">
-      {isLoading && !curriculo ? (
+      {error ? (
+        <div className="p-8 md:p-12 text-center rounded-3xl bg-rose-950/20 border border-rose-500/30 space-y-4 animate-fade-in shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-2xl font-bold border border-rose-500/20 shadow-inner">
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-lg font-bold text-rose-200">Falha ao Carregar Matriz Curricular</h3>
+            <p className="text-sm text-rose-300/80 leading-relaxed">
+              {error}
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={loadData}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      ) : isLoading && !curriculo ? (
         <div className="h-64 rounded-3xl bg-slate-900/60 border border-slate-800 animate-pulse" />
       ) : curriculo ? (
         <CurriculoHeader

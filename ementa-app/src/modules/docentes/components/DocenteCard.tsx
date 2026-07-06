@@ -53,7 +53,7 @@ export const DocenteCard: React.FC<DocenteCardProps> = ({
             )}
             {isCoordenador && (
               <span className="text-[10px] font-mono font-extrabold uppercase px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1 shadow-sm">
-                ★ Coordenador
+                Coordenador
               </span>
             )}
             {(docente.editadoManualmente || docente.inseridoManualmente) ? (
@@ -61,14 +61,14 @@ export const DocenteCard: React.FC<DocenteCardProps> = ({
                 title="Registro editado/inserido manualmente e protegido contra sobrescrita automática"
                 className="text-[10px] font-mono font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-300 border border-amber-500/30 flex items-center gap-1"
               >
-                ✏️ Personalizado
+                Personalizado
               </span>
             ) : (
               <span
                 title="Registro sincronizado diretamente com a API /api/docentes/"
                 className="text-[10px] font-mono font-medium px-2 py-0.5 rounded-md bg-purple-500/10 text-purple-300 border border-purple-500/20 flex items-center gap-1"
               >
-                ⚡ API
+                API
               </span>
             )}
           </div>
@@ -86,7 +86,7 @@ export const DocenteCard: React.FC<DocenteCardProps> = ({
 
         {docente.centroLotacao && (
           <p className="text-xs text-slate-400 mt-1.5 leading-relaxed italic line-clamp-2">
-            📍 {docente.centroLotacao}
+            {docente.centroLotacao}
           </p>
         )}
 
@@ -100,7 +100,7 @@ export const DocenteCard: React.FC<DocenteCardProps> = ({
 
       <div className="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
         <div className="flex items-center gap-2 text-slate-300 font-mono">
-          <span className="p-1 rounded-md bg-purple-500/10 text-purple-400">📚</span>
+          <span className="p-1 rounded-md bg-purple-500/10 text-purple-400"></span>
           <span>
             {totalDisciplinasLecionadas === 0
               ? 'Nenhuma disciplina alocada'

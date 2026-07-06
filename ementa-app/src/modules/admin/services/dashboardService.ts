@@ -1,6 +1,6 @@
 /**
  * @file dashboardService.ts
- * @description Serviço assíncrono para buscar dados estatísticos institucionais do endpoint /api/dashboard/ no Django, com fallback em memória.
+ * @description Serviço assíncrono para buscar dados estatísticos institucionais do endpoint /api/dashboard/ no Django.
  */
 
 import { apiClient } from '../../../shared/services/apiClient';
@@ -31,51 +31,6 @@ function mapDashboardDtoToFrontend(dto: DashboardOverviewDto): DashboardOverview
 }
 
 /**
- * Dados de fallback offline para simulação de desenvolvimento.
- */
-const MOCK_DASHBOARD_DATA: DashboardOverviewFrontend = {
-  ultimaSincronizacao: new Date().toISOString(),
-  metricas: {
-    totalCursos: 42,
-    sincronizados: 38,
-    desatualizados: 3,
-    inseridosManualmente: 1,
-  },
-  atividadeRecente: [
-    {
-      codigo: 'BSI101',
-      titulo: 'Algoritmos e Estruturas de Dados I',
-      area: 'Centro de Ciências Exatas e Tecnológicas - CCET',
-      status: 'Sincronizado!',
-    },
-    {
-      codigo: 'DIR204',
-      titulo: 'Direito Constitucional Avançado',
-      area: 'Centro de Ciências Jurídicas - CCJ',
-      status: 'Manual',
-    },
-    {
-      codigo: 'MED305',
-      titulo: 'Anatomia Humana e Patologia',
-      area: 'Centro de Ciências da Saúde e do Esporte - CCSE',
-      status: 'Sincronizado!',
-    },
-    {
-      codigo: 'PED102',
-      titulo: 'Psicologia da Educação e Aprendizagem',
-      area: 'Centro de Educação, Letras e Artes - CELA',
-      status: 'Desatualizado',
-    },
-    {
-      codigo: 'AGR401',
-      titulo: 'Manejo de Solos e Sustentabilidade',
-      area: 'Centro de Ciências Biológicas e da Natureza - CCBN',
-      status: 'Sincronizado!',
-    },
-  ],
-};
-
-/**
  * Busca o painel de monitoramento do Back-End (/api/dashboard/).
  */
 export async function fetchDashboardOverview(): Promise<DashboardOverviewFrontend> {
@@ -84,11 +39,9 @@ export async function fetchDashboardOverview(): Promise<DashboardOverviewFronten
     if (response && response.metrics) {
       return mapDashboardDtoToFrontend(response);
     }
+    throw new Error('Formato de resposta inválido retornado pelo servidor no dashboard.');
   } catch (error) {
-    console.warn('Falha ao conectar com /api/dashboard/. Usando fallback em memória:', error);
+    console.error('Erro ao buscar dados do painel no Back-End (/api/dashboard/):', error);
+    throw error;
   }
-
-  // Fallback em memória
-  await new Promise((resolve) => setTimeout(resolve, 400));
-  return MOCK_DASHBOARD_DATA;
 }
