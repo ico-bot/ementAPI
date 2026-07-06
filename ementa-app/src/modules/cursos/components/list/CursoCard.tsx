@@ -41,18 +41,48 @@ export const CursoCard: React.FC<CursoCardProps> = ({ curso, onViewEmentasClick 
                 {curso.turno}
               </span>
             )}
+            {curso.modalidade && (
+              <span className="text-xs px-2 py-0.5 rounded-md bg-indigo-500/10 text-indigo-300 border border-indigo-500/20">
+                {curso.modalidade}
+              </span>
+            )}
+            {curso.conceitoMec && (
+              <span 
+                className="text-xs flex items-center gap-1 font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm shadow-amber-500/5" 
+                title={`Conceito MEC: ${curso.conceitoMec}`}
+              >
+                ⭐ {curso.conceitoMec}
+              </span>
+            )}
           </div>
           <span
-            className={`text-xs px-2.5 py-1 rounded-full font-medium border whitespace-nowrap ${getFunctioningBadgeStyle(
+            className={`text-[10px] uppercase px-2.5 py-1 rounded-full font-bold border whitespace-nowrap tracking-wide ${getFunctioningBadgeStyle(
               curso.funcionamento
             )}`}
           >
             {curso.funcionamento}
           </span>
         </div>
-        <h3 className="text-lg font-bold text-white group-hover:text-purple-300 transition-colors pt-3">
+        
+        {curso.areaConhecimento && (
+          <p className="text-[9px] uppercase font-bold tracking-widest text-slate-500 mt-4 mb-1">
+            {curso.areaConhecimento}
+          </p>
+        )}
+        
+        <h3 className={`text-lg font-bold text-white group-hover:text-purple-300 transition-colors ${!curso.areaConhecimento ? 'pt-3' : ''}`}>
           {curso.nome}
         </h3>
+        
+        {curso.coordenador && (
+          <p className="text-xs text-slate-400 mt-2 flex items-center gap-2">
+            <span className="w-5 h-5 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-[10px]">
+              🧑‍🏫
+            </span>
+            <span className="truncate">Coord: <strong className="text-slate-300 font-medium">{curso.coordenador.nome}</strong></span>
+          </p>
+        )}
+
         {curso.descricao && <p className="text-xs text-slate-400 mt-2 line-clamp-2">{curso.descricao}</p>}
       </div>
 
@@ -66,9 +96,9 @@ export const CursoCard: React.FC<CursoCardProps> = ({ curso, onViewEmentasClick 
               Períodos: <strong className="text-slate-200 font-mono">{curso.periodos}</strong>
             </span>
           )}
-          {curso.modalidade && (
-            <span className="text-slate-500 border-l border-slate-800 pl-3">
-              {curso.modalidade}
+          {curso.grauAcademico && (
+            <span className="text-slate-500 border-l border-slate-800 pl-3 hidden sm:inline">
+              {curso.grauAcademico}
             </span>
           )}
         </div>
