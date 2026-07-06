@@ -6,8 +6,9 @@ django.setup()
 
 from extracao_dados.services.extracao_service import ExtracaoService
 
-service = ExtracaoService()
-resultado = service.executar(salvar_no_banco=True
-)
+print("Iniciando extração completa de todos os cursos do ementário da UFAC...")
 
-print("Cursos salvos:", len(resultado))
+service = ExtracaoService()
+resultado = service.executar(salvar_no_banco=True)
+
+print("Cursos processados e salvos:", len(resultado))
