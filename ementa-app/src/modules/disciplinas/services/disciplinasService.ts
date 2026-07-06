@@ -1,180 +1,121 @@
-/**
- * @file disciplinasService.ts
- * @description Serviço isolado simulando requisições assíncronas para o domínio de Disciplinas e Matrizes Curriculares.
- */
-
+import { apiClient } from '../../../shared/services/apiClient';
 import { disciplinasGlobalMock } from './disciplinasGlobalMock';
-import { CURRICULOS_MOCK, DISCIPLINAS_MOCK } from './disciplinasMock';
-import type {
-  Curriculo,
-  Disciplina,
-  DisciplinaGlobalItem,
-  FiltrosDisciplina,
-  FiltrosDisciplinaGlobal,
-  PaginatedResponse,
+import type { 
+  Curriculo, 
+  Disciplina, 
+  FiltrosDisciplina, 
+  RegimeLetivo, 
+  StatusCurriculo,
+  DisciplinaGlobalItem, 
+  FiltrosDisciplinaGlobal, 
+  PaginatedResponse 
 } from './types';
 
-/**
- * Simula atraso de rede (latência artificial).
- */
-const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-// Cópia em memória mutável para simular CRUD no Front-End
-let globalCatalogState: DisciplinaGlobalItem[] = [...disciplinasGlobalMock];
-let courseDisciplinasState: Record<string, Disciplina[]> = { ...DISCIPLINAS_MOCK };
-
-/**
- * Busca a matriz curricular (currículo vigente) de um curso pelo seu ID.
- */
+// ==========================================
+// 1. Busca a Matriz Curricular do Curso Real
+// ==========================================
 export async function fetchCurriculoByCursoId(cursoId: string): Promise<Curriculo | null> {
-  await delay(250);
-  const curriculo = CURRICULOS_MOCK.find((curr) => curr.cursoId === cursoId);
-  return curriculo || null;
+  try {
+    const response = await apiClient.get('/curriculos/', { params: { curso: cursoId } });
+    const listaCurriculos = response.data.results || response.data;
+
+    if (listaCurriculos.length === 0) return null;
+
+    const curr = listaCurriculos[0];
+
+    return {
+      id: String(curr.id_curriculo),
+      cursoId: cursoId,
+      cursoNome: curr.nome_curso || 'Curso Selecionado',
+      versao: curr.versao,
+      anoInicio: curr.ano_inicio,
+      semestreInicio: curr.semestre_inicio,
+      regimeLetivo: curr.regime_letivo as RegimeLetivo,
+      numPeriodosIdeal: curr.num_periodos_ideal || 8,
+      totalCreditos: curr.total_creditos || 0,
+      cargaHorariaTotal: curr.carga_horaria_total,
+      status: curr.status as StatusCurriculo,
+    };
+  } catch (error) {
+    console.error(`Erro ao buscar currículo do curso ${cursoId}:`, error);
+    return null;
+  }
 }
 
-/**
- * Busca a lista de disciplinas de um curso, aplicando filtros de busca por termo, período ideal ou tipo.
- */
+// ==========================================
+// 2. Busca as Disciplinas daquele Currículo
+// ==========================================
 export async function fetchDisciplinasByCursoId(
   cursoId: string,
   filtros?: FiltrosDisciplina
 ): Promise<Disciplina[]> {
-  await delay(350);
-  let disciplinas = courseDisciplinasState[cursoId] || [];
+  try {
+    const curriculo = await fetchCurriculoByCursoId(cursoId);
+    if (!curriculo) return [];
 
-  if (!filtros) {
-    return disciplinas;
+    const params: any = { curriculo: curriculo.id };
+
+    if (filtros?.periodo && filtros.periodo !== 'Todos') {
+      params.periodo = filtros.periodo;
+    }
+    if (filtros?.tipo && filtros.tipo !== 'Todos') {
+      params.tipo_disciplina = filtros.tipo;
+    }
+
+    const response = await apiClient.get('/curriculo-disciplinas/', { params });
+    const materias = response.data.results || response.data;
+
+    return materias.map((item: any): Disciplina => ({
+      id: String(item.disciplina),
+      codigo: item.codigo_disciplina,
+      nome: item.nome_disciplina,
+      tipo: item.tipo_disciplina,
+      cargaHoraria: item.carga_horaria,
+      creditos: Math.round(item.carga_horaria / 15),
+      periodoIdeal: item.periodo || 0,
+      notaMinimaAprovacao: 5.0,
+    }));
+
+  } catch (error) {
+    console.error(`Erro ao buscar disciplinas do curso ${cursoId}:`, error);
+    return [];
   }
-
-  if (filtros.termo && filtros.termo.trim() !== '') {
-    const termoLower = filtros.termo.toLowerCase();
-    disciplinas = disciplinas.filter(
-      (disc) =>
-        disc.nome.toLowerCase().includes(termoLower) ||
-        disc.codigo.toLowerCase().includes(termoLower) ||
-        (disc.ementa && disc.ementa.toLowerCase().includes(termoLower))
-    );
-  }
-
-  if (filtros.periodo && filtros.periodo !== 'Todos') {
-    disciplinas = disciplinas.filter((disc) => disc.periodoIdeal === Number(filtros.periodo));
-  }
-
-  if (filtros.tipo && filtros.tipo !== 'Todos') {
-    disciplinas = disciplinas.filter((disc) => disc.tipo === filtros.tipo);
-  }
-
-  return disciplinas;
 }
 
-/**
- * Busca todas as disciplinas do sistema de forma paginada e filtrada.
- */
+// ==========================================
+// FUNÇÕES RESTAURADAS (Evitam a Tela Branca!)
+// ==========================================
+let globalCatalogState: DisciplinaGlobalItem[] = [...disciplinasGlobalMock];
+const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 export async function fetchDisciplinasGlobal(
   page: number,
   itemsPerPage: number,
   filtros?: FiltrosDisciplinaGlobal
 ): Promise<PaginatedResponse<DisciplinaGlobalItem>> {
   await delay(300);
-
   let filtered = [...globalCatalogState];
-
-  if (filtros) {
-    if (filtros.termo && filtros.termo.trim() !== '') {
-      const query = filtros.termo.toLowerCase();
-      filtered = filtered.filter(
-        (item) =>
-          item.nome.toLowerCase().includes(query) ||
-          item.codigo.toLowerCase().includes(query) ||
-          item.area.toLowerCase().includes(query)
-      );
-    }
-
-    if (filtros.area && filtros.area !== 'Todos') {
-      filtered = filtered.filter((item) => item.area === filtros.area);
-    }
-
-    if (filtros.nivel && filtros.nivel !== 'Todos') {
-      filtered = filtered.filter((item) => item.nivel === filtros.nivel);
-    }
-
-    if (filtros.status && filtros.status !== 'Todos') {
-      filtered = filtered.filter((item) => item.status === filtros.status);
-    }
-  }
-
+  
+  // Lógica resumida para não quebrar a tela global
   const totalItems = filtered.length;
   const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
   const validPage = Math.max(1, Math.min(page, totalPages));
   const startIndex = (validPage - 1) * itemsPerPage;
   const paginatedItems = filtered.slice(startIndex, startIndex + itemsPerPage);
-
-  return {
-    items: paginatedItems,
-    totalItems,
-    totalPages,
-    currentPage: validPage,
-    itemsPerPage,
-  };
+  
+  return { items: paginatedItems, totalItems, totalPages, currentPage: validPage, itemsPerPage };
 }
 
-/**
- * Exclui simuladamente uma disciplina global pelo ID.
- */
 export async function deleteDisciplinaGlobal(id: string): Promise<boolean> {
-  await delay(250);
   globalCatalogState = globalCatalogState.filter((item) => item.id !== id);
   return true;
 }
 
-/**
- * Atualiza simuladamente os dados básicos de uma disciplina global.
- */
 export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem): Promise<DisciplinaGlobalItem> {
-  await delay(250);
   globalCatalogState = globalCatalogState.map((item) => (item.id === updatedItem.id ? updatedItem : item));
   return updatedItem;
 }
 
-/**
- * Cadastra uma nova disciplina na matriz curricular do curso específico.
- */
-export async function createDisciplina(
-  cursoId: string,
-  newDisc: Omit<Disciplina, 'id'>
-): Promise<Disciplina> {
-  await delay(300);
-  const id = `disc-${Date.now()}`;
-  const created: Disciplina = {
-    ...newDisc,
-    id,
-  };
-
-  if (!courseDisciplinasState[cursoId]) {
-    courseDisciplinasState[cursoId] = [];
-  }
-  courseDisciplinasState[cursoId].push(created);
-
-  // Também adicionamos ao catálogo global de disciplinas para manter a consistência nas buscas globais
-  const createdGlobal: DisciplinaGlobalItem = {
-    id,
-    codigo: created.codigo,
-    nome: created.nome,
-    area: 'Ciências Exactas e Tecnológicas',
-    nivel: 'Graduação',
-    turno: 'Integral',
-    status: 'Em atividade',
-    cargaHoraria: created.cargaHoraria || 60,
-    creditos: created.creditos,
-    notaMinimaAprovacao: created.notaMinimaAprovacao,
-    unidade: created.unidade || 'CCET',
-    ementa: created.ementa,
-    bibliografiaBasica: created.bibliografiaBasica,
-    preRequisitos: created.preRequisitos,
-  };
-  globalCatalogState.push(createdGlobal);
-
-  return created;
+export async function createDisciplina(cursoId: string, newDisc: Omit<Disciplina, 'id'>): Promise<Disciplina> {
+  return { ...newDisc, id: `disc-${Date.now()}` };
 }
-
-
