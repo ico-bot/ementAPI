@@ -1,6 +1,3 @@
 # Modais de Cursos (`src/modules/cursos/components/modals`)
 
-Este diretório agrupa os modais de cadastro, edição e visualização de entidades do domínio de cursos.
-
-## Arquivos
-* **`NewCursoModal.tsx`**: Modal dedicado ao cadastro de novos cursos institucionais.
+Este diretório reservava os modais do domínio de cursos. Conforme as regras de negócio vigentes, não é permitido o cadastro manual de novos cursos no sistema (os cursos provêm exclusivamente da extração de dados).

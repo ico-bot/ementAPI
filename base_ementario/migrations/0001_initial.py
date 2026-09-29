@@ -32,7 +32,6 @@ class Migration(migrations.Migration):
                 ('ato_autorizacao_curso', models.TextField(blank=True, null=True)),
                 ('ato_reconhecimento_curso', models.TextField(blank=True, null=True)),
                 ('conceito_mec_curso', models.CharField(blank=True, max_length=50, null=True)),
-                ('inserido_manualmente', models.BooleanField(default=False)),
                 ('created_at', models.DateTimeField(auto_now_add=True)),
                 ('updated_at', models.DateTimeField(auto_now=True)),
             ],

@@ -7,9 +7,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CursoCard } from '../components/list/CursoCard';
 import { CursosFilterBar } from '../components/filters/CursosFilterBar';
-import { NewCursoModal } from '../components/modals/NewCursoModal';
-import { fetchCursos } from '../services/cursosService';
-import type { Curso, NivelCurso, StatusFuncionamento, TurnoCurso } from '../services/types';
+import { Pagination } from '../../../shared/components/ui/Pagination';
+import { useCursosPaginated } from '../../../shared/hooks/queries/useCursosQuery';
+import type { NivelCurso, StatusFuncionamento, TurnoCurso } from '../services/types';
 
 export interface CursosListPageProps {
   onSelectCurso?: (cursoId: string) => void;
@@ -17,9 +17,9 @@ export interface CursosListPageProps {
 
 export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso }) => {
   const navigate = useNavigate();
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [isNewModalOpen, setIsNewModalOpen] = useState<boolean>(false);
+  // Pagination state variables
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
 
   // Filter state variables (English names as per Rule 3)
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -27,38 +27,41 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
   const [selectedLevel, setSelectedLevel] = useState<NivelCurso | 'Todos'>('Todos');
   const [selectedShift, setSelectedShift] = useState<TurnoCurso | 'Todos'>('Todos');
 
-  const loadCursos = async (): Promise<void> => {
-    setIsLoading(true);
-    try {
-      const data = await fetchCursos({
-        termo: searchTerm,
-        funcionamento: selectedFunctioning,
-        nivel: selectedLevel,
-        turno: selectedShift,
-      });
-      setCursos(data);
-    } catch (error) {
-      console.error('Erro ao buscar cursos filtrados:', error);
-    } finally {
-      setIsLoading(false);
+  const { data, isLoading, error: queryError, refetch } = useCursosPaginated(
+    currentPage,
+    itemsPerPage,
+    {
+      termo: searchTerm,
+      funcionamento: selectedFunctioning,
+      nivel: selectedLevel,
+      turno: selectedShift,
     }
-  };
+  );
+
+  const cursos = data?.items || [];
+  const totalItems = data?.totalItems || 0;
+  const totalPages = data?.totalPages || 1;
+  const error = queryError ? 'Não foi possível carregar o catálogo de cursos. Verifique se o Back-End está online e tente novamente.' : null;
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
-      loadCursos();
-    }, 300);
-
-    return () => {
-      clearTimeout(debounceTimer);
-    };
+    setCurrentPage(1);
   }, [searchTerm, selectedFunctioning, selectedLevel, selectedShift]);
+
+  const handlePageChange = (newPage: number): void => {
+    setCurrentPage(newPage);
+  };
+
+  const handleItemsPerPageChange = (newCount: number): void => {
+    setItemsPerPage(newCount);
+    setCurrentPage(1);
+  };
 
   const handleResetFilters = (): void => {
     setSearchTerm('');
     setSelectedFunctioning('Todos');
     setSelectedLevel('Todos');
     setSelectedShift('Todos');
+    setCurrentPage(1);
   };
 
   return (
@@ -69,22 +72,14 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
             Catálogo de Cursos
             {!isLoading && (
               <span className="text-xs px-2.5 py-0.5 rounded-full bg-slate-800 text-purple-300 font-mono font-semibold border border-purple-500/20">
-                {cursos.length}
+                {totalItems}
               </span>
             )}
           </h2>
           <p className="text-sm text-slate-400 mt-1">
-            Pesquise, filtre e cadastre as matrizes curriculares da instituição
+            Consulte e filtre os cursos e matrizes curriculares extraídos da instituição
           </p>
         </div>
-
-        <button
-          type="button"
-          onClick={() => setIsNewModalOpen(true)}
-          className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-medium text-sm shadow-lg shadow-purple-900/30 transition-all active:scale-95 cursor-pointer"
-        >
-          + Cadastrar Curso
-        </button>
       </div>
 
       <CursosFilterBar
@@ -99,7 +94,33 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
         onResetFilters={handleResetFilters}
       />
 
-      {isLoading ? (
+      {error ? (
+        <div className="p-8 md:p-12 text-center rounded-3xl bg-rose-950/20 border border-rose-500/30 space-y-4 animate-fade-in shadow-xl">
+          <div className="w-14 h-14 rounded-2xl bg-rose-500/10 text-rose-400 flex items-center justify-center mx-auto text-2xl font-bold border border-rose-500/20 shadow-inner">
+            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div className="max-w-md mx-auto space-y-1">
+            <h3 className="text-lg font-bold text-rose-200">Falha ao Carregar Cursos</h3>
+            <p className="text-sm text-rose-300/80 leading-relaxed">
+              {error}
+            </p>
+          </div>
+          <div className="pt-2">
+            <button
+              type="button"
+              onClick={() => refetch()}
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs transition-all active:scale-95 shadow-lg shadow-rose-900/30 cursor-pointer"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Tentar Novamente
+            </button>
+          </div>
+        </div>
+      ) : isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
           {[1, 2, 3, 4].map((skeletonId) => (
             <div key={skeletonId} className="h-48 rounded-2xl bg-slate-900/60 border border-slate-800/80" />
@@ -123,22 +144,29 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {cursos.map((curso) => (
-            <CursoCard
-              key={curso.id}
-              curso={curso}
-              onViewEmentasClick={(id) => (onSelectCurso ? onSelectCurso(id) : navigate(`/cursos/${id}/disciplinas`))}
-            />
-          ))}
-        </div>
-      )}
+        <>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {cursos.map((curso) => (
+              <CursoCard
+                key={curso.id}
+                curso={curso}
+                onViewEmentasClick={(id) => (onSelectCurso ? onSelectCurso(id) : navigate(`/cursos/${id}/disciplinas`))}
+              />
+            ))}
+          </div>
 
-      <NewCursoModal
-        isOpen={isNewModalOpen}
-        onClose={() => setIsNewModalOpen(false)}
-        onSuccess={loadCursos}
-      />
+          {!isLoading && totalItems > 0 && (
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+              onPageChange={handlePageChange}
+              onItemsPerPageChange={handleItemsPerPageChange}
+            />
+          )}
+        </>
+      )}
     </section>
   );
 };

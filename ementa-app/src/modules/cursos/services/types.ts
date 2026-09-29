@@ -35,20 +35,8 @@ export interface Curso {
     nome: string;
   };
   descricao?: string;
-}
-
-export interface CursoInput {
-  nome: string;
-  codigo: string;
-  cargaHoraria: number;
-  periodos?: number;
-  funcionamento: StatusFuncionamento;
-  nivel: NivelCurso;
-  turno?: TurnoCurso;
-  modalidade?: ModalidadeCurso;
-  areaConhecimento?: string;
-  grauAcademico?: string;
-  descricao?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
 }
 
 export interface FiltrosCurso {
@@ -57,3 +45,6 @@ export interface FiltrosCurso {
   nivel?: NivelCurso | 'Todos';
   turno?: TurnoCurso | 'Todos';
 }
+
+export type { PaginatedResponse } from '../../../shared/types';
+

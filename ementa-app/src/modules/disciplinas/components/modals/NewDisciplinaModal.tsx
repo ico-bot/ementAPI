@@ -3,20 +3,28 @@
  * @description Modal interativo para cadastro de uma nova Disciplina na matriz curricular ativa.
  */
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Disciplina, TipoDisciplina } from '../../services/types';
+import { fetchCursos } from '../../../cursos/services/cursosService';
+import type { Curso } from '../../../cursos/services/types';
 
 export interface NewDisciplinaModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSave: (newDisc: Omit<Disciplina, 'id'>) => Promise<void>;
+  onSave: (newDisc: Omit<Disciplina, 'id'>, cursoId: string) => Promise<void>;
+  cursoIdPreSelecionado?: string;
 }
 
 export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
   isOpen,
   onClose,
   onSave,
+  cursoIdPreSelecionado,
 }) => {
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [selectedCursoId, setSelectedCursoId] = useState<string>('');
+  const [isLoadingCursos, setIsLoadingCursos] = useState<boolean>(false);
+
   const [nome, setNome] = useState<string>('');
   const [codigo, setCodigo] = useState<string>('');
   const [cargaHoraria, setCargaHoraria] = useState<number>(60);
@@ -34,6 +42,27 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (isOpen) {
+      setIsLoadingCursos(true);
+      fetchCursos()
+        .then((data) => {
+          setCursos(data);
+          if (cursoIdPreSelecionado) {
+            setSelectedCursoId(cursoIdPreSelecionado);
+          } else {
+            setSelectedCursoId('');
+          }
+        })
+        .catch((err) => {
+          console.error('Erro ao buscar cursos no modal:', err);
+        })
+        .finally(() => {
+          setIsLoadingCursos(false);
+        });
+    }
+  }, [isOpen, cursoIdPreSelecionado]);
+
   if (!isOpen) {
     return null;
   }
@@ -41,6 +70,12 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    // Validação da Regra de Negócio 2: Curso obrigatório
+    if (!selectedCursoId.trim()) {
+      setError('É obrigatório selecionar um curso existente para associar a disciplina.');
+      return;
+    }
 
     // Validação simples de campos obrigatórios
     if (!nome.trim()) {
@@ -59,19 +94,22 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
     setIsSubmitting(true);
 
     try {
-      await onSave({
-        nome: nome.trim(),
-        codigo: codigo.trim().toUpperCase(),
-        cargaHoraria,
-        ementa: ementa.trim(),
-        bibliografiaBasica: bibliografia.trim(),
-        preRequisitos: preRequisitos.trim() || undefined,
-        tipo,
-        periodoIdeal,
-        creditos,
-        notaMinimaAprovacao,
-        unidade,
-      });
+      await onSave(
+        {
+          nome: nome.trim(),
+          codigo: codigo.trim().toUpperCase(),
+          cargaHoraria,
+          ementa: ementa.trim(),
+          bibliografiaBasica: bibliografia.trim(),
+          preRequisitos: preRequisitos.trim() || undefined,
+          tipo,
+          periodoIdeal,
+          creditos,
+          notaMinimaAprovacao,
+          unidade,
+        },
+        selectedCursoId
+      );
       
       // Limpa formulário
       setNome('');
@@ -122,6 +160,45 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
               <span>{error}</span>
             </div>
           )}
+
+          {/* Seleção do Curso Associado (Regra de Negócio 2) */}
+          <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/20 space-y-2">
+            <label htmlFor="newCursoSelect" className="block text-xs font-semibold uppercase tracking-wider text-purple-300">
+              Curso Associado *
+            </label>
+            {isLoadingCursos ? (
+              <div className="w-full h-10 rounded-xl bg-slate-950/80 border border-slate-800 flex items-center px-3 text-xs text-slate-400 animate-pulse">
+                Carregando lista de cursos da instituição...
+              </div>
+            ) : (
+              <select
+                id="newCursoSelect"
+                value={selectedCursoId}
+                onChange={(e) => setSelectedCursoId(e.target.value)}
+                disabled={Boolean(cursoIdPreSelecionado)}
+                required
+                className="w-full rounded-xl bg-slate-950 border border-slate-800 text-white px-3.5 py-2.5 text-xs focus:outline-none focus:border-purple-500 cursor-pointer disabled:opacity-75 disabled:cursor-not-allowed"
+              >
+                <option value="" disabled>
+                  -- Selecione o Curso ao qual a disciplina pertence --
+                </option>
+                {cursos.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nome} ({c.codigo})
+                  </option>
+                ))}
+              </select>
+            )}
+            {cursoIdPreSelecionado ? (
+              <p className="text-[11px] text-slate-400">
+                Curso fixado automaticamente pela matriz curricular em visualização.
+              </p>
+            ) : (
+              <p className="text-[11px] text-slate-400">
+                Toda nova disciplina deve obrigatoriamente estar vinculada a um curso existente.
+              </p>
+            )}
+          </div>
 
           {/* Nome */}
           <div>

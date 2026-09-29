@@ -39,11 +39,10 @@ class CursoAdmin(admin.ModelAdmin):
         'nivel_curso',
         'turno_curso',
         'funcionamento_curso',
-        'inserido_manualmente',
         'coordenador',
     )
     search_fields = ('codigo_curso', 'nome_curso')
-    list_filter = ('nivel_curso', 'turno_curso', 'funcionamento_curso', 'modalidade_curso', 'inserido_manualmente')
+    list_filter = ('nivel_curso', 'turno_curso', 'funcionamento_curso', 'modalidade_curso')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ['coordenador']
 

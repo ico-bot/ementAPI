@@ -1,9 +1,9 @@
 /**
  * @file DisciplinaDetailModal.tsx
- * @description Modal unificado de visualização detalhada de Disciplinas, suportando tanto o contexto de Matrizes Curriculares quanto o Catálogo Geral.
+ * @description Modal unificado de visualização detalhada de Disciplinas, organizado em abas pedagógicas limpas e sem poluição visual.
  */
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import type { Disciplina, DisciplinaGlobalItem } from '../../services/types';
 
 export interface DisciplinaDetailModalProps<
@@ -15,6 +15,8 @@ export interface DisciplinaDetailModalProps<
   onEditClick?: (disciplina: T) => void;
 }
 
+type DetailTabType = 'geral' | 'pedagogico' | 'bibliografia';
+
 export const DisciplinaDetailModal = <
   T extends Disciplina | DisciplinaGlobalItem = Disciplina | DisciplinaGlobalItem
 >({
@@ -23,6 +25,14 @@ export const DisciplinaDetailModal = <
   onClose,
   onEditClick,
 }: DisciplinaDetailModalProps<T>): React.ReactElement | null => {
+  const [activeTab, setActiveTab] = useState<DetailTabType>('geral');
+
+  useEffect(() => {
+    if (isOpen) {
+      setActiveTab('geral');
+    }
+  }, [isOpen, disciplina]);
+
   if (!isOpen || !disciplina) {
     return null;
   }
@@ -38,7 +48,7 @@ export const DisciplinaDetailModal = <
       <div className="relative w-full max-w-3xl max-h-[90vh] flex flex-col rounded-3xl bg-slate-900 border border-white/10 shadow-2xl overflow-hidden animate-scale-up">
         
         {/* Cabeçalho do Modal */}
-        <div className="p-6 md:p-8 bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border-b border-white/10 flex items-start justify-between gap-4">
+        <div className="p-6 md:p-8 bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border-b border-white/10 flex items-start justify-between gap-4 shrink-0">
           <div>
             <div className="flex flex-wrap items-center gap-2 mb-3 font-mono">
               <span className="text-xs font-bold px-3 py-1 rounded-lg bg-purple-500/20 text-purple-200 border border-purple-500/30 shadow-sm">
@@ -96,7 +106,7 @@ export const DisciplinaDetailModal = <
         </div>
 
         {/* Grade de Estatísticas Rápidas */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-950/60 border-b border-white/5 text-center font-mono">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 bg-slate-950/60 border-b border-white/5 text-center font-mono shrink-0">
           <div className="p-2.5 rounded-2xl bg-white/[0.02] border border-white/5">
             <span className="text-[10px] text-slate-400 uppercase tracking-wider block mb-1">Carga Horária</span>
             <strong className="text-lg font-bold text-indigo-300">
@@ -126,172 +136,337 @@ export const DisciplinaDetailModal = <
           </div>
         </div>
 
+        {/* Barra de Abas (Tabs) - Limpa, sem ícones ou tags visuais */}
+        <div className="flex border-b border-white/10 bg-slate-950/40 px-6 shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab('geral')}
+            className={`py-3 px-5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+              activeTab === 'geral'
+                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            Visão Geral & Docentes
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('pedagogico')}
+            className={`py-3 px-5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+              activeTab === 'pedagogico'
+                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            Plano Pedagógico
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setActiveTab('bibliografia')}
+            className={`py-3 px-5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
+              activeTab === 'bibliografia'
+                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
+                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
+            }`}
+          >
+            Bibliografias & Referências
+          </button>
+        </div>
+
         {/* Corpo Scrollável de Detalhes */}
-        <div className="p-6 md:p-8 overflow-y-auto space-y-6 text-slate-300 text-sm leading-relaxed custom-scrollbar divide-y divide-white/5">
+        <div className="p-6 md:p-8 overflow-y-auto space-y-6 flex-1 text-slate-300 text-sm leading-relaxed custom-scrollbar">
           
-          {/* Corpo Docente (Apenas vindo de Matriz Curricular) */}
-          {isCurriculoDisc && (
-            <div className="space-y-3 pt-2 first:pt-0">
-              <div className="flex items-center justify-between">
-                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                  <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                  Corpo Docente (Ministrantes)
+          {/* ABA 1: VISÃO GERAL & DOCENTES */}
+          {activeTab === 'geral' && (
+            <div className="space-y-6 animate-fade-in">
+              {(disciplina.editadoManualmente || disciplina.inseridoManualmente) && (
+                <div className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs leading-relaxed">
+                  <strong className="block text-amber-300 font-semibold mb-0.5">Dado Personalizado e Protegido</strong>
+                  Esta disciplina possui edições manuais ou cadastro personalizado no sistema. O Back-End a sinalizou para que sua ficha não seja alterada ou sobrescrita pela sincronização periódica automática.
+                </div>
+              )}
+
+              {/* Corpo Docente (Apenas vindo de Matriz Curricular) */}
+              {isCurriculoDisc && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                      Corpo Docente (Ministrantes)
+                    </h4>
+                    {temDocentes && (
+                      <span className="text-[10px] font-mono bg-purple-500/10 text-purple-300 px-2.5 py-0.5 rounded-full border border-purple-500/20">
+                        {disciplina.docentes!.length} professor{disciplina.docentes!.length !== 1 ? 'es' : ''}
+                      </span>
+                    )}
+                  </div>
+
+                  {temDocentes ? (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {disciplina.docentes!.map((doc) => (
+                        <div
+                          key={doc.id}
+                          className="flex items-center gap-3 p-3.5 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 transition-all shadow-sm"
+                        >
+                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600/40 to-indigo-600/40 border border-purple-400/30 text-purple-200 flex items-center justify-center font-bold text-sm shrink-0 shadow-inner font-mono">
+                            {doc.nome.replace(/^(Dr\.|Dra\.|Me\.|Esp\.)\s+/i, '').charAt(0)}
+                          </div>
+                          <div className="overflow-hidden">
+                            <p className="text-xs font-bold text-slate-100 truncate" title={doc.nome}>
+                              {doc.nome}
+                            </p>
+                            <p className="text-[10px] text-purple-300/80 font-mono mt-0.5 truncate">
+                              {doc.titulacao || 'Docente UFAC'}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                      Docente não informado no ementário institucional desta matriz.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Pré-requisitos */}
+              {disciplina.preRequisitos && (
+                <div className="space-y-2 pt-4 border-t border-white/5">
+                  <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                    Pré-requisitos Curriculares
+                  </h4>
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 text-xs">
+                    {disciplina.preRequisitos}
+                  </div>
+                </div>
+              )}
+
+              <div className="p-4 rounded-2xl bg-slate-950/50 border border-white/5 text-xs text-slate-400 space-y-1 font-mono">
+                <p><strong className="text-slate-300">Código Oficial:</strong> {disciplina.codigo}</p>
+                <p><strong className="text-slate-300">Carga Horária Ideal:</strong> {disciplina.cargaHoraria || disciplina.creditos * 15} horas</p>
+                <p><strong className="text-slate-300">Créditos:</strong> {disciplina.creditos} ({disciplina.creditos * 15}h teóricas/práticas)</p>
+                <p><strong className="text-slate-300">Média de Aprovação:</strong> {typeof disciplina.notaMinimaAprovacao === 'number' ? disciplina.notaMinimaAprovacao.toFixed(1) : disciplina.notaMinimaAprovacao}</p>
+              </div>
+            </div>
+          )}
+
+          {/* ABA 2: PLANO PEDAGÓGICO */}
+          {activeTab === 'pedagogico' && (
+            <div className="space-y-6 animate-fade-in divide-y divide-white/5">
+              
+              {/* Ementa */}
+              <div className="space-y-2.5 pt-4 first:pt-0">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Ementa Curricular Oficial
                 </h4>
-                {temDocentes && (
-                  <span className="text-[10px] font-mono bg-purple-500/10 text-purple-300 px-2 py-0.5 rounded-full border border-purple-500/20">
-                    {disciplina.docentes!.length} professor{disciplina.docentes!.length !== 1 ? 'es' : ''}
-                  </span>
+                {disciplina.ementa ? (
+                  <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 text-slate-200 whitespace-pre-line font-sans leading-relaxed text-xs sm:text-sm">
+                    {disciplina.ementa}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Ementa curricular não detalhada no cadastro atual.
+                  </p>
                 )}
               </div>
 
-              {temDocentes ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {disciplina.docentes!.map((doc) => (
-                    <div
-                      key={doc.id}
-                      className="flex items-center gap-3 p-3 rounded-2xl bg-white/[0.03] hover:bg-white/[0.06] border border-white/10 transition-all shadow-sm"
-                    >
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-600/40 to-indigo-600/40 border border-purple-400/30 text-purple-200 flex items-center justify-center font-bold text-sm shrink-0 shadow-inner font-mono">
-                        {doc.nome.replace(/^(Dr\.|Dra\.|Me\.|Esp\.)\s+/i, '').charAt(0)}
-                      </div>
-                      <div className="overflow-hidden">
-                        <p className="text-xs font-bold text-slate-100 truncate" title={doc.nome}>
-                          {doc.nome}
-                        </p>
-                        <p className="text-[10px] text-purple-300/80 font-mono mt-0.5 truncate">
-                          {doc.titulacao || 'Docente UFAC'}
-                        </p>
-                      </div>
+              {/* Objetivos */}
+              <div className="space-y-2.5 pt-6">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Objetivos da Disciplina
+                </h4>
+                {disciplina.objetivos ? (
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line text-xs sm:text-sm leading-relaxed">
+                    {disciplina.objetivos}
+                  </div>
+                ) : disciplina.ppc ? (
+                  <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-purple-200 font-medium">
+                        Objetivos alinhados às diretrizes institucionais do PPC do curso.
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                        {disciplina.ppc.conteudo || 'Consulte o documento oficial da matriz curricular sincronizado na API /api/ppcs/.'}
+                      </p>
                     </div>
-                  ))}
+                    {disciplina.ppc.arquivoUrl && (
+                      <a
+                        href={disciplina.ppc.arquivoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition-all shrink-0"
+                      >
+                        Ver no PPC
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Objetivos não especificados no documento institucional.
+                  </p>
+                )}
+              </div>
+
+              {/* Programa */}
+              <div className="space-y-2.5 pt-6">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Conteúdo Programático (Programa)
+                </h4>
+                {disciplina.programa ? (
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line text-xs sm:text-sm leading-relaxed font-mono">
+                    {disciplina.programa}
+                  </div>
+                ) : disciplina.ppc ? (
+                  <div className="p-4 rounded-2xl bg-purple-950/20 border border-purple-500/20 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div>
+                      <p className="text-xs text-purple-200 font-medium">
+                        Programa e ementário detalhados no Projeto Pedagógico de Curso (PPC).
+                      </p>
+                      <p className="text-[11px] text-slate-400 mt-0.5 line-clamp-1">
+                        {disciplina.ppc.conteudo || 'Consulte o arquivo oficial do PPC para o detalhamento aula a aula e bibliografias.'}
+                      </p>
+                    </div>
+                    {disciplina.ppc.arquivoUrl && (
+                      <a
+                        href={disciplina.ppc.arquivoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3 py-1.5 rounded-lg bg-purple-600/80 hover:bg-purple-600 text-white text-xs font-semibold transition-all shrink-0"
+                      >
+                        Abrir Documento
+                      </a>
+                    )}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Programa detalhado não informado no ementário da universidade.
+                  </p>
+                )}
+              </div>
+
+              {/* Metodologia de Ensino */}
+              <div className="space-y-2.5 pt-6">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Metodologia de Ensino
+                </h4>
+                {disciplina.metodologia ? (
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line text-xs sm:text-sm leading-relaxed">
+                    {disciplina.metodologia}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Metodologia de ensino não informada na ficha da disciplina.
+                  </p>
+                )}
+              </div>
+
+              {/* Critérios de Avaliação */}
+              <div className="space-y-2.5 pt-6">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Critérios e Instrumentos de Avaliação
+                </h4>
+                {disciplina.avaliacao ? (
+                  <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line text-xs sm:text-sm leading-relaxed">
+                    {disciplina.avaliacao}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Critérios de avaliação não informados na ficha da disciplina.
+                  </p>
+                )}
+              </div>
+
+            </div>
+          )}
+
+          {/* ABA 3: BIBLIOGRAFIAS */}
+          {activeTab === 'bibliografia' && (
+            <div className="space-y-6 animate-fade-in divide-y divide-white/5">
+              
+              {/* Bibliografia Básica */}
+              <div className="space-y-2.5 pt-4 first:pt-0">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Bibliografia Básica
+                </h4>
+                {disciplina.bibliografiaBasica ? (
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-300 whitespace-pre-line leading-relaxed">
+                    {disciplina.bibliografiaBasica}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Bibliografia básica não cadastrada na ficha da disciplina.
+                  </p>
+                )}
+              </div>
+
+              {/* Bibliografia Complementar */}
+              <div className="space-y-2.5 pt-6">
+                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                  Bibliografia Complementar
+                </h4>
+                {disciplina.bibliografiaComplementar ? (
+                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-300 whitespace-pre-line leading-relaxed">
+                    {disciplina.bibliografiaComplementar}
+                  </div>
+                ) : (
+                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
+                    Bibliografia complementar não cadastrada na ficha da disciplina.
+                  </p>
+                )}
+              </div>
+
+              {/* Projeto Pedagógico de Curso (PPC) Integrado */}
+              {disciplina.ppc && (
+                <div className="space-y-3 pt-6">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
+                      Projeto Pedagógico do Curso (PPC • API /api/ppcs/)
+                    </h4>
+                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
+                      Sincronizado
+                    </span>
+                  </div>
+                  <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
+                    <div className="space-y-1 flex-1">
+                      <p className="text-xs font-bold text-white flex items-center gap-2">
+                        <span>Matriz Institucional</span>
+                        <span className="text-[10px] font-mono font-normal text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
+                          ID PPC: {disciplina.ppc.id}
+                        </span>
+                      </p>
+                      {disciplina.ppc.conteudo ? (
+                        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
+                          {disciplina.ppc.conteudo}
+                        </p>
+                      ) : (
+                        <p className="text-xs text-slate-400 italic">
+                          Documento pedagógico devidamente sincronizado para consulta na universidade.
+                        </p>
+                      )}
+                    </div>
+                    {disciplina.ppc.arquivoUrl && (
+                      <a
+                        href={disciplina.ppc.arquivoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all shrink-0 hover:scale-105 active:scale-95"
+                      >
+                        <span>Abrir PDF Completo</span>
+                      </a>
+                    )}
+                  </div>
                 </div>
-              ) : (
-                <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
-                  Docente não informado no ementário institucional desta matriz.
-                </p>
               )}
-            </div>
-          )}
 
-          {/* Ementa */}
-          <div className="space-y-2 pt-6 first:pt-0">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              Ementa Curricular Oficial
-            </h4>
-            {disciplina.ementa ? (
-              <div className="p-4 rounded-2xl bg-slate-950/40 border border-white/5 text-slate-200 whitespace-pre-line font-sans leading-relaxed">
-                {disciplina.ementa}
-              </div>
-            ) : (
-              <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
-                Ementa não detalhada no cadastro institucional atual.
-              </p>
-            )}
-          </div>
-
-          {/* Objetivos */}
-          <div className="space-y-2 pt-6">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              Objetivos da Disciplina
-            </h4>
-            {disciplina.objetivos ? (
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line">
-                {disciplina.objetivos}
-              </div>
-            ) : (
-              <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
-                Objetivos não especificados no documento institucional.
-              </p>
-            )}
-          </div>
-
-          {/* Programa */}
-          <div className="space-y-2 pt-6">
-            <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-              <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-              Conteúdo Programático (Programa)
-            </h4>
-            {disciplina.programa ? (
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200 whitespace-pre-line">
-                {disciplina.programa}
-              </div>
-            ) : (
-              <p className="italic text-slate-500 text-xs bg-slate-950/40 p-3 rounded-xl border border-dashed border-slate-800">
-                Programa detalhado não informado no ementário da universidade.
-              </p>
-            )}
-          </div>
-
-          {/* Metodologia e Avaliação (Específico do Catálogo Global) */}
-          {isGlobalDisc && disciplina.metodologia && (
-            <div className="space-y-2 pt-6">
-              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                Metodologia de Ensino
-              </h4>
-              <p className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-300">
-                {disciplina.metodologia}
-              </p>
-            </div>
-          )}
-
-          {isGlobalDisc && disciplina.avaliacao && (
-            <div className="space-y-2 pt-6">
-              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                Critérios e Instrumentos de Avaliação
-              </h4>
-              <p className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-300">
-                {disciplina.avaliacao}
-              </p>
-            </div>
-          )}
-
-          {/* Pré-requisitos */}
-          {disciplina.preRequisitos && (
-            <div className="space-y-2 pt-6">
-              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                Pré-requisitos
-              </h4>
-              <div className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 text-slate-200">
-                {disciplina.preRequisitos}
-              </div>
-            </div>
-          )}
-
-          {/* Bibliografia Básica */}
-          {disciplina.bibliografiaBasica && (
-            <div className="space-y-2 pt-6">
-              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                Bibliografia Básica
-              </h4>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-400 whitespace-pre-line leading-relaxed">
-                {disciplina.bibliografiaBasica}
-              </div>
-            </div>
-          )}
-
-          {/* Bibliografia Complementar */}
-          {disciplina.bibliografiaComplementar && (
-            <div className="space-y-2 pt-6">
-              <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 flex items-center gap-2 font-mono">
-                <span className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                Bibliografia Complementar
-              </h4>
-              <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-400 whitespace-pre-line leading-relaxed">
-                {disciplina.bibliografiaComplementar}
-              </div>
             </div>
           )}
 
         </div>
 
         {/* Rodapé */}
-        <div className="p-4 md:p-6 bg-slate-950 border-t border-white/10 flex items-center justify-between gap-4">
+        <div className="p-4 md:p-6 bg-slate-950 border-t border-white/10 flex items-center justify-between gap-4 shrink-0">
           <span className="text-xs text-slate-500 truncate hidden sm:inline">
             ID Interno: <code className="font-mono text-slate-400">{disciplina.id}</code>
           </span>

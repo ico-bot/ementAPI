@@ -56,7 +56,7 @@ export const LoginForm: React.FC<LoginFormProps> = ({ onLoginSuccess }) => {
     <div className="space-y-6">
       {/* Credenciais de Acesso Dica */}
       <div className="p-3 rounded-2xl bg-purple-500/10 border border-purple-500/15 text-xs text-purple-300 flex items-center justify-between gap-2.5">
-        <span className="font-semibold">Credenciais de teste:</span>
+        <span className="font-semibold">Acesso Admin (Teste):</span>
         <span className="font-mono bg-slate-950/80 px-2.5 py-0.5 rounded border border-slate-800 text-[11px] text-white">
           admin / admin123
         </span>

@@ -17,6 +17,15 @@ export interface DocenteResumo {
   titulacao?: string;
 }
 
+export interface ProjetoPedagogicoCurso {
+  id: string;
+  curriculoId: string;
+  conteudo?: string;
+  arquivoUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Disciplina {
   id: string;
   codigo: string;
@@ -31,9 +40,14 @@ export interface Disciplina {
   objetivos?: string;
   ementa?: string;
   programa?: string;
+  metodologia?: string;
+  avaliacao?: string;
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
   preRequisitos?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface DisciplinaGlobalItem {
@@ -41,6 +55,8 @@ export interface DisciplinaGlobalItem {
   codigo: string;
   nome: string;
   area: string;
+  cursoId?: string;
+  cursoNome?: string;
   nivel: NivelDisciplina;
   turno: TurnoDisciplina;
   status: StatusDisciplina;
@@ -56,6 +72,9 @@ export interface DisciplinaGlobalItem {
   bibliografiaBasica?: string;
   bibliografiaComplementar?: string;
   preRequisitos?: string;
+  editadoManualmente?: boolean;
+  inseridoManualmente?: boolean;
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface Curriculo {
@@ -71,6 +90,7 @@ export interface Curriculo {
   cargaHorariaTotal: number;
   status: StatusCurriculo;
   corpoDocente?: DocenteResumo[]; // Todos os professores vinculados ao curso na matriz
+  ppc?: ProjetoPedagogicoCurso | null;
 }
 
 export interface FiltrosDisciplina {
@@ -84,6 +104,7 @@ export interface FiltrosDisciplinaGlobal {
   area?: string | 'Todos';
   nivel?: NivelDisciplina | 'Todos';
   status?: StatusDisciplina | 'Todos';
+  cursoId?: string | 'Todos';
 }
 
 export interface PaginatedResponse<T> {

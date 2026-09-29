@@ -55,7 +55,6 @@ class PersistenciaService:
                 "ato_autorizacao_curso": dados.get("ato_autorizacao"),
                 "ato_reconhecimento_curso": dados.get("ato_reconhecimento"),
                 "conceito_mec_curso": dados.get("conceito_mec"),
-                "inserido_manualmente": False,
             }
         )
         return curso
@@ -156,9 +155,16 @@ class PersistenciaService:
             )
 
     def salvar_disciplina(self, curso, informacoes, dados_disciplina):
+        codigo = informacoes.get("codigo")
+        disciplina_existente = Disciplina.objects.filter(codigo_disciplina=codigo).first()
+
+        if disciplina_existente and (disciplina_existente.editado_manualmente or disciplina_existente.inserido_manualmente):
+            disciplina_existente.cursos_vinculados.add(curso)
+            return disciplina_existente
+
         unidade = self.obter_unidade(informacoes.get("unidade"))
         disciplina, _ = Disciplina.objects.update_or_create(
-            codigo_disciplina=informacoes.get("codigo"),
+            codigo_disciplina=codigo,
             defaults={
                 "nome_disciplina": informacoes.get("nome") or "",
                 "unidade": unidade,
