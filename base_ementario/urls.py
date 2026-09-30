@@ -26,4 +26,5 @@ urlpatterns = [
     
     # Nossa rota customizada do Dashboard que o admin vai usar
     path('dashboard/', views.dashboard_overview, name='dashboard-overview'),
+    path('sync/', views.manual_sync, name='manual-sync'),
 ]

@@ -193,3 +193,16 @@ class DocumentoCursoViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminOrHasAPIKey]
     filterset_fields = ['curso', 'tipo_documento']
     search_fields = ['titulo']
+
+
+from extracao_dados.services.extracao_service import ExtracaoService
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def manual_sync(request):
+    try:
+        service = ExtracaoService()
+        resultado = service.executar(salvar_no_banco=True)
+        return Response({'status': 'success', 'message': f'Sincronização concluída com sucesso! {len(resultado)} cursos processados.'})
+    except Exception as e:
+        return Response({'status': 'error', 'message': str(e)}, status=500)
