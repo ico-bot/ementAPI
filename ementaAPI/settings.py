@@ -155,10 +155,12 @@ REST_FRAMEWORK = {
     
     # 4. Throttling
     'DEFAULT_THROTTLE_CLASSES': [
-        'rest_framework.throttling.AnonRateThrottle',
+        'base_ementario.throttling.APIKeyRateThrottle',
+        'base_ementario.throttling.CustomAnonRateThrottle',
         'rest_framework.throttling.UserRateThrottle'
     ],
     'DEFAULT_THROTTLE_RATES': {
+        'api_key': '5000/hour', # Como exigido por contrato ou documentado (NRF4)
         'anon': '100/day',   # Usuários sem identificação: 100 acessos por dia
         'user': '1000/hour', # Usuários logados/Admin: 1000 acessos por hora
     }
