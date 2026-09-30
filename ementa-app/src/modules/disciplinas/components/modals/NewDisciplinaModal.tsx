@@ -29,7 +29,6 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
   const [codigo, setCodigo] = useState<string>('');
   const [cargaHoraria, setCargaHoraria] = useState<number>(60);
   const [ementa, setEmenta] = useState<string>('');
-  const [bibliografia, setBibliografia] = useState<string>('');
   const [preRequisitos, setPreRequisitos] = useState<string>('');
   
   // Campos estruturais auxiliares com valores padrão
@@ -100,7 +99,6 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
           codigo: codigo.trim().toUpperCase(),
           cargaHoraria,
           ementa: ementa.trim(),
-          bibliografiaBasica: bibliografia.trim(),
           preRequisitos: preRequisitos.trim() || undefined,
           tipo,
           periodoIdeal,
@@ -116,7 +114,6 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
       setCodigo('');
       setCargaHoraria(60);
       setEmenta('');
-      setBibliografia('');
       setPreRequisitos('');
       setTipo('Obrigatória');
       setPeriodoIdeal(1);
@@ -335,20 +332,7 @@ export const NewDisciplinaModal: React.FC<NewDisciplinaModalProps> = ({
             />
           </div>
 
-          {/* Bibliografia */}
-          <div>
-            <label htmlFor="newBiblio" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">
-              Bibliografia (Básica e Complementar)
-            </label>
-            <textarea
-              id="newBiblio"
-              rows={4}
-              placeholder="Indique as referências bibliográficas recomendadas (uma por linha)..."
-              value={bibliografia}
-              onChange={(e) => setBibliografia(e.target.value)}
-              className="w-full rounded-xl bg-slate-950 border border-slate-800 text-slate-200 px-4 py-2.5 text-xs focus:outline-none focus:border-purple-500 custom-scrollbar transition-colors"
-            />
-          </div>
+          
 
           {/* Unidade Acadêmica (Hidden default value, customizable) */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

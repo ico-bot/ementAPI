@@ -140,8 +140,6 @@ export function mapDisciplinaDtoToGlobalItem(
     programa: dto.programa || undefined,
     metodologia: dto.metodologia || undefined,
     avaliacao: dto.avaliacao || undefined,
-    bibliografiaBasica: dto.bibliografia_basica || undefined,
-    bibliografiaComplementar: dto.bibliografia_complementar || undefined,
     editadoManualmente: dto.editado_manualmente || false,
     inseridoManualmente: dto.inserido_manualmente || false,
   };
@@ -235,8 +233,6 @@ export async function fetchDisciplinasByCursoId(
             programa: cd.programa || undefined,
             metodologia: cd.metodologia || undefined,
             avaliacao: cd.avaliacao || undefined,
-            bibliografiaBasica: cd.bibliografia_basica || undefined,
-            bibliografiaComplementar: cd.bibliografia_complementar || undefined,
             editadoManualmente: cd.editado_manualmente || false,
             inseridoManualmente: cd.inserido_manualmente || false,
           };
@@ -269,8 +265,6 @@ export async function fetchDisciplinasByCursoId(
               programa: dto.programa || undefined,
               metodologia: dto.metodologia || undefined,
               avaliacao: dto.avaliacao || undefined,
-              bibliografiaBasica: dto.bibliografia_basica || undefined,
-              bibliografiaComplementar: dto.bibliografia_complementar || undefined,
               editadoManualmente: dto.editado_manualmente || false,
               inseridoManualmente: dto.inserido_manualmente || false,
             };
@@ -376,14 +370,15 @@ export async function fetchDisciplinasGlobal(
       }
 
       const totalItems = mapped.length;
-      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      const totalPages = response.total_pages || Math.ceil(totalItems / itemsPerPage) || 1;
+      const currentPage = response.current_page || page;
       const paginatedItems = mapped.slice((page - 1) * itemsPerPage, page * itemsPerPage);
 
       return {
         items: paginatedItems,
         totalItems,
         totalPages,
-        currentPage: page,
+        currentPage,
         itemsPerPage,
       };
     } else {
@@ -393,14 +388,15 @@ export async function fetchDisciplinasGlobal(
       const response = await apiClient<any>('/disciplinas/', { params });
       const dtos: DisciplinaBackendDto[] = Array.isArray(response) ? response : (response.results || []);
       const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
-      const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+      const totalPages = response.total_pages || Math.ceil(totalItems / itemsPerPage) || 1;
+      const currentPage = response.current_page || page;
       const mapped = dtos.map((dto) => mapDisciplinaDtoToGlobalItem(dto, cursoMap));
 
       return {
         items: mapped,
         totalItems,
         totalPages,
-        currentPage: page,
+        currentPage,
         itemsPerPage,
       };
     }
@@ -439,8 +435,6 @@ export async function updateDisciplinaGlobal(updatedItem: DisciplinaGlobalItem):
       programa: updatedItem.programa,
       metodologia: updatedItem.metodologia,
       avaliacao: updatedItem.avaliacao,
-      bibliografia_basica: updatedItem.bibliografiaBasica,
-      bibliografia_complementar: updatedItem.bibliografiaComplementar,
       editado_manualmente: true,
     };
     const response = await apiClient<DisciplinaBackendDto>(`/disciplinas/${updatedItem.id}/`, {
@@ -476,8 +470,6 @@ export async function createDisciplina(
       programa: newDisc.programa,
       metodologia: newDisc.metodologia,
       avaliacao: newDisc.avaliacao,
-      bibliografia_basica: newDisc.bibliografiaBasica,
-      bibliografia_complementar: newDisc.bibliografiaComplementar,
       cursos_vinculados: [Number(cursoId)],
       inserido_manualmente: true,
     };

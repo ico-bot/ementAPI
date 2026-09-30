@@ -45,3 +45,17 @@ export async function fetchDashboardOverview(): Promise<DashboardOverviewFronten
     throw error;
   }
 }
+
+
+/**
+ * Inicia a sincronização manual chamando o Back-End.
+ */
+export async function triggerManualSync(): Promise<{ status: string; message: string }> {
+  try {
+    const response = await apiClient<any>('/sync/', { method: 'POST' });
+    return { status: 'success', message: response.message || 'Sincronização iniciada com sucesso.' };
+  } catch (error) {
+    console.error('Erro ao iniciar sincronização:', error);
+    throw new Error('Falha ao iniciar sincronização.');
+  }
+}

@@ -86,6 +86,7 @@ export const CursosFilterBar: React.FC<CursosFilterBarProps> = ({
           />
         </div>
 
+        
         {/* Filter selects group */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Funcionamento Filter */}

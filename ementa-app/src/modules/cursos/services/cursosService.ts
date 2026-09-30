@@ -93,7 +93,14 @@ export const fetchCursosPaginated = async (
       page,
       page_size: itemsPerPage,
     };
-    if (filtros?.termo && filtros.termo.trim() !== '') params.search = filtros.termo;
+    if (filtros?.termo && filtros.termo.trim() !== '') {
+      const termoStr = filtros.termo.trim();
+      if (/^\d{3,}$/.test(termoStr)) {
+        params.codigo_curso = parseInt(termoStr, 10).toString();
+      } else {
+        params.search = termoStr;
+      }
+    }
     if (filtros?.funcionamento && filtros.funcionamento !== 'Todos') params.funcionamento_curso = filtros.funcionamento;
     if (filtros?.nivel && filtros.nivel !== 'Todos') params.nivel_curso = filtros.nivel;
     if (filtros?.turno && filtros.turno !== 'Todos') params.turno_curso = filtros.turno;
@@ -101,7 +108,8 @@ export const fetchCursosPaginated = async (
     const response = await apiClient<any>('/cursos/', { params });
     const dtos: CursoBackendDto[] = Array.isArray(response) ? response : (response.results || []);
     const totalItems = Array.isArray(response) ? response.length : (response.count || dtos.length);
-    const totalPages = Math.ceil(totalItems / itemsPerPage) || 1;
+    const totalPages = response.total_pages || Math.ceil(totalItems / itemsPerPage) || 1;
+    const currentPage = response.current_page || page;
     const mapped = dtos.map(mapCursoDtoToFrontend);
 
     return {
@@ -109,7 +117,7 @@ export const fetchCursosPaginated = async (
       totalItems,
       totalCount: totalItems,
       totalPages,
-      currentPage: page,
+      currentPage,
       itemsPerPage,
     };
   } catch (error) {

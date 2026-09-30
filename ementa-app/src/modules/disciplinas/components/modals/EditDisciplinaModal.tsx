@@ -13,7 +13,7 @@ export interface EditDisciplinaModalProps {
   onSave: (updated: DisciplinaGlobalItem) => Promise<void>;
 }
 
-type TabType = 'geral' | 'pedagogico' | 'bibliografia';
+type TabType = 'geral' | 'pedagogico';
 
 export const EditDisciplinaModal: React.FC<EditDisciplinaModalProps> = ({
   disciplina,
@@ -107,17 +107,7 @@ export const EditDisciplinaModal: React.FC<EditDisciplinaModalProps> = ({
           Plano Pedagógico
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('bibliografia')}
-            className={`py-3 px-4 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all cursor-pointer flex items-center gap-2 ${
-              activeTab === 'bibliografia'
-                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
-            }`}
-          >
-           Bibliografias
-          </button>
+          
         </div>
 
         {/* Formulário com Scroll Interno */}
@@ -336,41 +326,7 @@ export const EditDisciplinaModal: React.FC<EditDisciplinaModalProps> = ({
               </div>
             )}
 
-            {/* ABA 3: BIBLIOGRAFIAS */}
-            {activeTab === 'bibliografia' && (
-              <div className="space-y-5 animate-fade-in">
-                <div>
-                  <label htmlFor="editBiblioBasica" className="block text-xs font-semibold uppercase tracking-wider text-purple-300 mb-1 flex items-center justify-between">
-                    <span>Bibliografia Básica</span>
-                    <span className="text-[10px] font-normal text-slate-500">Mínimo de 3 títulos fundamentais</span>
-                  </label>
-                  <textarea
-                    id="editBiblioBasica"
-                    rows={6}
-                    placeholder="AUTOR, Nome. Título do livro. Edição. Local: Editora, Ano.&#10;AUTOR 2, Nome. Título..."
-                    value={formData.bibliografiaBasica || ''}
-                    onChange={(e) => setFormData({ ...formData, bibliografiaBasica: e.target.value })}
-                    className="w-full rounded-xl bg-slate-950 border border-slate-800 text-slate-300 px-4 py-3 text-xs leading-relaxed focus:outline-none focus:border-purple-500 custom-scrollbar transition-colors font-mono"
-                  />
-                </div>
-
-                <div>
-                  <label htmlFor="editBiblioComp" className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1 flex items-center justify-between">
-                    <span>Bibliografia Complementar</span>
-                    <span className="text-[10px] font-normal text-slate-500">Leituras de aprofundamento</span>
-                  </label>
-                  <textarea
-                    id="editBiblioComp"
-                    rows={6}
-                    placeholder="AUTOR COMPLEMENTAR, Nome. Título da obra..."
-                    value={formData.bibliografiaComplementar || ''}
-                    onChange={(e) => setFormData({ ...formData, bibliografiaComplementar: e.target.value })}
-                    className="w-full rounded-xl bg-slate-950 border border-slate-800 text-slate-300 px-4 py-3 text-xs leading-relaxed focus:outline-none focus:border-purple-500 custom-scrollbar transition-colors font-mono"
-                  />
-                </div>
-              </div>
-            )}
-
+            
           </div>
 
           {/* Rodapé do Modal */}

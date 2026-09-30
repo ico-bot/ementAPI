@@ -42,8 +42,6 @@ export interface Disciplina {
   programa?: string;
   metodologia?: string;
   avaliacao?: string;
-  bibliografiaBasica?: string;
-  bibliografiaComplementar?: string;
   preRequisitos?: string;
   editadoManualmente?: boolean;
   inseridoManualmente?: boolean;
@@ -69,8 +67,6 @@ export interface DisciplinaGlobalItem {
   programa?: string;
   metodologia?: string;
   avaliacao?: string;
-  bibliografiaBasica?: string;
-  bibliografiaComplementar?: string;
   preRequisitos?: string;
   editadoManualmente?: boolean;
   inseridoManualmente?: boolean;

@@ -15,7 +15,7 @@ export interface DisciplinaDetailModalProps<
   onEditClick?: (disciplina: T) => void;
 }
 
-type DetailTabType = 'geral' | 'pedagogico' | 'bibliografia';
+type DetailTabType = 'geral' | 'pedagogico';
 
 export const DisciplinaDetailModal = <
   T extends Disciplina | DisciplinaGlobalItem = Disciplina | DisciplinaGlobalItem
@@ -162,17 +162,7 @@ export const DisciplinaDetailModal = <
             Plano Pedagógico
           </button>
 
-          <button
-            type="button"
-            onClick={() => setActiveTab('bibliografia')}
-            className={`py-3 px-5 text-xs font-semibold uppercase tracking-wider border-b-2 transition-all cursor-pointer ${
-              activeTab === 'bibliografia'
-                ? 'border-purple-500 text-purple-300 bg-purple-500/10'
-                : 'border-transparent text-slate-400 hover:text-slate-200 hover:border-slate-700'
-            }`}
-          >
-            Bibliografias & Referências
-          </button>
+          
         </div>
 
         {/* Corpo Scrollável de Detalhes */}
@@ -267,7 +257,7 @@ export const DisciplinaDetailModal = <
                   </div>
                 ) : (
                   <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Ementa curricular não detalhada no cadastro atual.
+                    Informação não cadastrada.
                   </p>
                 )}
               </div>
@@ -304,7 +294,7 @@ export const DisciplinaDetailModal = <
                   </div>
                 ) : (
                   <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Objetivos não especificados no documento institucional.
+                    Informação não cadastrada.
                   </p>
                 )}
               </div>
@@ -341,7 +331,7 @@ export const DisciplinaDetailModal = <
                   </div>
                 ) : (
                   <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Programa detalhado não informado no ementário da universidade.
+                    Informação não cadastrada.
                   </p>
                 )}
               </div>
@@ -357,7 +347,7 @@ export const DisciplinaDetailModal = <
                   </div>
                 ) : (
                   <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Metodologia de ensino não informada na ficha da disciplina.
+                    Informação não cadastrada.
                   </p>
                 )}
               </div>
@@ -373,7 +363,7 @@ export const DisciplinaDetailModal = <
                   </div>
                 ) : (
                   <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Critérios de avaliação não informados na ficha da disciplina.
+                    Informação não cadastrada.
                   </p>
                 )}
               </div>
@@ -381,88 +371,7 @@ export const DisciplinaDetailModal = <
             </div>
           )}
 
-          {/* ABA 3: BIBLIOGRAFIAS */}
-          {activeTab === 'bibliografia' && (
-            <div className="space-y-6 animate-fade-in divide-y divide-white/5">
-              
-              {/* Bibliografia Básica */}
-              <div className="space-y-2.5 pt-4 first:pt-0">
-                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
-                  Bibliografia Básica
-                </h4>
-                {disciplina.bibliografiaBasica ? (
-                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-300 whitespace-pre-line leading-relaxed">
-                    {disciplina.bibliografiaBasica}
-                  </div>
-                ) : (
-                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Bibliografia básica não cadastrada na ficha da disciplina.
-                  </p>
-                )}
-              </div>
-
-              {/* Bibliografia Complementar */}
-              <div className="space-y-2.5 pt-6">
-                <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
-                  Bibliografia Complementar
-                </h4>
-                {disciplina.bibliografiaComplementar ? (
-                  <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 text-xs font-mono text-slate-300 whitespace-pre-line leading-relaxed">
-                    {disciplina.bibliografiaComplementar}
-                  </div>
-                ) : (
-                  <p className="italic text-slate-500 text-xs bg-slate-950/40 p-4 rounded-2xl border border-dashed border-slate-800">
-                    Bibliografia complementar não cadastrada na ficha da disciplina.
-                  </p>
-                )}
-              </div>
-
-              {/* Projeto Pedagógico de Curso (PPC) Integrado */}
-              {disciplina.ppc && (
-                <div className="space-y-3 pt-6">
-                  <div className="flex items-center justify-between">
-                    <h4 className="text-xs uppercase font-bold tracking-wider text-purple-400 font-mono">
-                      Projeto Pedagógico do Curso (PPC • API /api/ppcs/)
-                    </h4>
-                    <span className="text-[10px] font-mono px-2.5 py-0.5 rounded bg-purple-500/10 text-purple-300 border border-purple-500/20 font-semibold">
-                      Sincronizado
-                    </span>
-                  </div>
-                  <div className="p-5 rounded-2xl bg-gradient-to-r from-purple-950/40 via-slate-900 to-indigo-950/40 border border-purple-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-lg">
-                    <div className="space-y-1 flex-1">
-                      <p className="text-xs font-bold text-white flex items-center gap-2">
-                        <span>Matriz Institucional</span>
-                        <span className="text-[10px] font-mono font-normal text-purple-300 bg-purple-500/20 px-2 py-0.5 rounded">
-                          ID PPC: {disciplina.ppc.id}
-                        </span>
-                      </p>
-                      {disciplina.ppc.conteudo ? (
-                        <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                          {disciplina.ppc.conteudo}
-                        </p>
-                      ) : (
-                        <p className="text-xs text-slate-400 italic">
-                          Documento pedagógico devidamente sincronizado para consulta na universidade.
-                        </p>
-                      )}
-                    </div>
-                    {disciplina.ppc.arquivoUrl && (
-                      <a
-                        href={disciplina.ppc.arquivoUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs font-semibold shadow-lg shadow-purple-900/40 transition-all shrink-0 hover:scale-105 active:scale-95"
-                      >
-                        <span>Abrir PDF Completo</span>
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            </div>
-          )}
-
+          
         </div>
 
         {/* Rodapé */}

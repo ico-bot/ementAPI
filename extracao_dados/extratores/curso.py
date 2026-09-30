@@ -64,7 +64,8 @@ class CursoExtrator:
 
                 if match:
                     dados["nome_curso"] = match.group(1).strip()
-                    dados["codigo_curso"] = str(match.group(2))
+                    codigo_bruto = str(match.group(2))
+                    dados["codigo_curso"] = codigo_bruto.zfill(3) if codigo_bruto.isdigit() else codigo_bruto
                 else:
                     dados["nome_curso"] = valor
             else:

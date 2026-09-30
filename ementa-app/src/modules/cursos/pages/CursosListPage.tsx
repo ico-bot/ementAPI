@@ -84,6 +84,7 @@ export const CursosListPage: React.FC<CursosListPageProps> = ({ onSelectCurso })
 
       <CursosFilterBar
         searchTerm={searchTerm}
+          
         onSearchChange={setSearchTerm}
         selectedFunctioning={selectedFunctioning}
         onFunctioningChange={setSelectedFunctioning}
